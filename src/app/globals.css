@@ -1,0 +1,249 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Design system — consultant-notion.fr
+   Repris de Notion-Club/Infrastructure (src/app/globals.css).
+   Corrections volontaires vs repo source :
+     - #64748b NE fait PAS partie du branding (retiré).
+     - Pas de Geist Mono (une seule famille : SF Pro Display).
+     - Pas de H1 en clamp() (tailles franches).
+   Light mode uniquement.
+   ========================================================================== */
+
+/* --- SF Pro Display -------------------------------------------------------
+   Déposer les fichiers .otf dans public/fonts/ :
+     SFProDisplay-Regular.otf (400)
+     SFProDisplay-Medium.otf  (500)
+     SFProDisplay-Bold.otf    (700)
+   En leur absence, la stack de repli (-apple-system…) prend le relais.        */
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/fonts/SFProDisplay-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/fonts/SFProDisplay-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/fonts/SFProDisplay-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  /* Couleurs — accent de marque unique */
+  --color-accent: #e0625a;
+  --color-accent-strong: #d1504a;
+
+  /* Texte */
+  --color-ink: #000000;
+  --color-muted: #52525b;
+
+  /* Surfaces */
+  --color-page: #f5f2f2;
+  --color-card: #ffffff;
+  --color-raised: #f5f5f5;
+  --color-line: #e5e7eb;
+
+  /* Rayons */
+  --radius-xs: 12px;
+  --radius-sm: 16px;
+  --radius-md: 24px;
+  --radius-xl: 100px;
+  --radius-full: 9999px;
+
+  /* Typo */
+  --font-sans: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+
+  /* Mouvement */
+  --ease-signature: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  /* Sélection de texte (accent corail) */
+  --nc-selection: rgba(224, 98, 90, 0.24);
+
+  /* Ombres douces multi-couches */
+  --nc-shadow-2: rgba(0, 0, 0, 0.03) 0 -2px 16px -4px,
+    rgba(0, 0, 0, 0.08) 0 16px 40px -8px, rgba(0, 0, 0, 0.04) 0 1px 3px 0;
+  --nc-shadow-3: rgba(0, 0, 0, 0.06) 0 4px 24px 0, rgba(0, 0, 0, 0.04) 0 1px 2px 0;
+
+  /* Durées de mouvement */
+  --nc-dur-xfast: 150ms;
+  --nc-dur-fast: 200ms;
+  --nc-dur-normal: 250ms;
+  --nc-dur-slow: 300ms;
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Compense le header collant pour les ancrages internes */
+  scroll-padding-top: 88px;
+}
+
+body {
+  background-color: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--nc-selection);
+}
+
+/* --- Fond de marque signature --------------------------------------------
+   Élément fixe, deux halos corail latéraux centrés en hauteur.               */
+.nc-app-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+      56% 50% at -8% 50%,
+      rgba(224, 99, 90, 0.28) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      56% 50% at 108% 50%,
+      rgba(224, 99, 90, 0.26) 0%,
+      transparent 72%
+    ),
+    #f5f2f2;
+}
+
+/* --- Typographie ---------------------------------------------------------- */
+.nc-title {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  color: var(--color-ink);
+}
+
+.nc-eyebrow {
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+  color: var(--color-accent);
+}
+
+/* --- Ombres utilitaires --------------------------------------------------- */
+.nc-shadow-2 {
+  box-shadow: var(--nc-shadow-2);
+}
+.nc-shadow-3 {
+  box-shadow: var(--nc-shadow-3);
+}
+
+/* --- Cartes premium : motif de points corail au hover --------------------- */
+.nc-dot-hover {
+  position: relative;
+  isolation: isolate;
+}
+.nc-dot-hover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: radial-gradient(
+    rgba(224, 98, 90, 0.28) 1px,
+    transparent 1px
+  );
+  background-size: 14px 14px;
+  opacity: 0;
+  transition: opacity var(--nc-dur-normal) var(--ease-signature);
+  pointer-events: none;
+  z-index: 0;
+}
+.nc-dot-hover:hover::before {
+  opacity: 1;
+}
+
+/* --- Bordure conique corail rotative (.nc-shine-card) --------------------- */
+@property --nc-shine-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.nc-shine-card {
+  position: relative;
+  border-radius: var(--radius-sm);
+}
+.nc-shine-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--nc-shine-angle),
+    transparent 0deg,
+    rgba(224, 98, 90, 0.6) 90deg,
+    transparent 180deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity var(--nc-dur-normal) var(--ease-signature);
+  pointer-events: none;
+}
+.nc-shine-card:hover::before {
+  opacity: 1;
+  animation: nc-shine-rotate 4s linear infinite;
+}
+@keyframes nc-shine-rotate {
+  to {
+    --nc-shine-angle: 360deg;
+  }
+}
+
+/* --- Apparition au scroll -------------------------------------------------- */
+.nc-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--nc-dur-slow) var(--ease-signature),
+    transform var(--nc-dur-slow) var(--ease-signature);
+  will-change: opacity, transform;
+}
+.nc-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* --- Accessibilité : mouvement réduit ------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .nc-reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
