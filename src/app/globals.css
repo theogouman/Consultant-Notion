@@ -187,7 +187,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 2.25rem;
+  padding: 0 1.25rem;
 }
 @keyframes nc-marquee {
   from {

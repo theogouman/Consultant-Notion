@@ -12,10 +12,10 @@ export default function Header() {
           <Image
             src="/images/Annexes/theo-gouman-avatar.png"
             alt="Théo Gouman"
-            width={36}
-            height={36}
+            width={40}
+            height={40}
             priority
-            className="h-9 w-9 rounded-full object-cover"
+            className="h-10 w-10 rounded-md object-contain"
           />
           <span className="text-ink">{footer.name}</span>
         </Link>

@@ -19,12 +19,6 @@ export const hero = {
   microProof: "+100 entreprises accompagnées · certifications Notion · depuis 2022",
 };
 
-export const proof = {
-  stat: "+100 entreprises accompagnées",
-  // Les logos sont lus dynamiquement depuis public/images/Logo-Clients
-  // (cf. src/lib/logos.ts) et défilent dans un marquee.
-};
-
 export const problemMirror = {
   eyebrow: "Le miroir",
   title: "Vous vous reconnaissez ?",
