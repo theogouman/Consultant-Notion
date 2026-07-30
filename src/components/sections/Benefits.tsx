@@ -13,7 +13,7 @@ export default function Benefits() {
       <div className="grid gap-5 sm:grid-cols-2">
         {benefits.items.map((item, i) => (
           <Reveal key={i} delay={(i % 2) * 80}>
-            <div className="nc-dot-hover h-full rounded-md border border-line bg-card p-7 nc-shadow-3">
+            <div className="h-full rounded-md border border-line bg-card p-7 nc-shadow-3">
               <div className="relative z-[1]">
                 <span
                   aria-hidden

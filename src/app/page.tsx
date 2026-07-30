@@ -2,11 +2,9 @@ import Header from "@/components/sections/Header";
 import Hero from "@/components/sections/Hero";
 import ProofBar from "@/components/sections/ProofBar";
 import ProblemMirror from "@/components/sections/ProblemMirror";
-import Reframe from "@/components/sections/Reframe";
 import Benefits from "@/components/sections/Benefits";
 import Process from "@/components/sections/Process";
 import CaseStudies from "@/components/sections/CaseStudies";
-import ForWhom from "@/components/sections/ForWhom";
 import About from "@/components/sections/About";
 import Faq from "@/components/sections/Faq";
 import FinalCta from "@/components/sections/FinalCta";
@@ -27,11 +25,9 @@ export default function Home() {
         <Hero />
         <ProofBar />
         <ProblemMirror />
-        <Reframe />
         <Benefits />
         <Process />
         <CaseStudies />
-        <ForWhom />
         <About />
         <Faq />
         <FinalCta />

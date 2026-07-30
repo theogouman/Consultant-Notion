@@ -35,7 +35,7 @@ export default function CaseCard({
     <button
       ref={cardRef}
       onClick={handleOpen}
-      className="nc-dot-hover group nc-shadow-3 flex h-full flex-col overflow-hidden rounded-sm bg-card text-left transition-transform duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page"
+      className="group nc-shadow-3 flex h-full flex-col overflow-hidden rounded-sm bg-card text-left transition-transform duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page"
       aria-label={`Ouvrir l’étude de cas : ${caseStudy.title}`}
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-raised">

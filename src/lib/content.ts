@@ -21,15 +21,8 @@ export const hero = {
 
 export const proof = {
   stat: "+100 entreprises accompagnées",
-  // [À AFFINER] — liste des logos clients autorisés (noms ou fichiers).
-  logos: [
-    "Logo client",
-    "Logo client",
-    "Logo client",
-    "Logo client",
-    "Logo client",
-    "Logo client",
-  ] as string[],
+  // Les logos sont lus dynamiquement depuis public/images/Logo-Clients
+  // (cf. src/lib/logos.ts) et défilent dans un marquee.
 };
 
 export const problemMirror = {
@@ -42,19 +35,6 @@ export const problemMirror = {
     "Vous avez lancé un Notion, puis il s’est transformé en bazar que plus personne ne maintient.",
     "Un nouveau collaborateur met des semaines à comprendre où trouver quoi.",
   ],
-};
-
-export const reframe = {
-  eyebrow: "Le vrai problème",
-  title:
-    "Le problème n’est presque jamais l’outil. C’est ce qu’on lui demande de porter.",
-  paragraphs: [
-    "Deux situations, une même cause. Soit votre information est éparpillée entre le drive, les mails, les tableurs et trois applications — et personne n’a de vue d’ensemble. Soit vous avez déjà un Notion, mais à force d’empiler bases, templates et modules, il est devenu illisible.",
-    "Dans les deux cas, le réflexe est d’ajouter. Un outil, une page, une automatisation de plus. Et la charge monte au lieu de baisser.",
-    "Je fais l’inverse. Je pars de vos enjeux — ce qui doit vraiment être suivi, décidé, partagé — et je construis le système le plus simple qui y répond. Moins d’outils, moins de bases, moins d’endroits où l’information se perd.",
-  ],
-  highlight:
-    "Faire moins, pour faire mieux. C’est ce qui fait qu’une organisation est encore utilisée douze mois plus tard, au lieu d’être abandonnée.",
 };
 
 export const benefits = {
@@ -133,27 +113,6 @@ export const caseStudies = {
       company: "Entreprise",
     },
   ],
-};
-
-export const forWhom = {
-  eyebrow: "À qui c’est fait",
-  title: "Pour qui c’est fait — et pour qui ça ne l’est pas.",
-  forYou: {
-    title: "C’est pour vous si",
-    items: [
-      "Vous dirigez une TPE ou une PME et votre organisation vous coûte du temps chaque semaine.",
-      "Vous voulez un système que votre équipe utilise vraiment, pas un outil de plus.",
-      "Vous préférez qu’on parte de vos enjeux plutôt que d’un template générique.",
-    ],
-  },
-  notForYou: {
-    title: "Ce n’est pas pour vous si",
-    items: [
-      "Vous cherchez un template à télécharger et à installer seul.",
-      "Vous voulez le Notion le plus complexe possible, avec toutes les fonctionnalités.",
-      "Vous n’êtes pas prêt à impliquer votre équipe une poignée d’heures dans le projet.",
-    ],
-  },
 };
 
 export const about = {

@@ -152,28 +152,59 @@ body {
   box-shadow: var(--nc-shadow-3);
 }
 
-/* --- Cartes premium : motif de points corail au hover --------------------- */
-.nc-dot-hover {
-  position: relative;
-  isolation: isolate;
-}
-.nc-dot-hover::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background-image: radial-gradient(
-    rgba(224, 98, 90, 0.28) 1px,
-    transparent 1px
+/* --- Marquee : bande de logos en défilement horizontal infini ------------- */
+.nc-marquee {
+  overflow: hidden;
+  /* Fondus sur les bords gauche/droite */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 8%,
+    #000 92%,
+    transparent 100%
   );
-  background-size: 14px 14px;
-  opacity: 0;
-  transition: opacity var(--nc-dur-normal) var(--ease-signature);
-  pointer-events: none;
-  z-index: 0;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
 }
-.nc-dot-hover:hover::before {
-  opacity: 1;
+.nc-marquee__track {
+  display: flex;
+  width: max-content;
+  /* translateX(-50%) = exactement une copie du contenu (dupliqué à l'identique)
+     → boucle sans couture */
+  animation: nc-marquee 40s linear infinite;
+}
+/* Pause au survol */
+.nc-marquee:hover .nc-marquee__track {
+  animation-play-state: paused;
+}
+.nc-marquee__item {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2.25rem;
+}
+@keyframes nc-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+/* Accessibilité : on stoppe le mouvement */
+@media (prefers-reduced-motion: reduce) {
+  .nc-marquee__track {
+    animation: none;
+  }
+  .nc-marquee {
+    overflow-x: auto;
+  }
 }
 
 /* --- Bordure conique corail rotative (.nc-shine-card) --------------------- */
