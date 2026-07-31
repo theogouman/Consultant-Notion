@@ -119,9 +119,10 @@ export default function BookingFlow() {
 
   return (
     <>
-      {/* Barre de progression collée au haut du modal (phase formulaire). */}
+      {/* Barre de progression À L'INTÉRIEUR du modal (rognée par les coins
+          arrondis du panneau via son overflow-hidden). */}
       {phase === "form" && (
-        <div className="absolute inset-x-0 top-0 z-10 h-1 overflow-hidden rounded-t-md bg-raised">
+        <div className="h-1 w-full shrink-0 overflow-hidden bg-raised">
           <div
             className="h-full bg-accent transition-[width] duration-[300ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
             style={{ width: `${progress}%` }}
@@ -129,8 +130,9 @@ export default function BookingFlow() {
         </div>
       )}
 
-      <ResizeAnimator>
-        <div className="p-6 sm:p-8">
+      <div className="min-h-0 overflow-y-auto">
+        <ResizeAnimator>
+          <div className="p-6 sm:p-8">
           {banner && (
             <div className="mb-4 rounded-sm border border-accent/30 bg-accent/5 px-4 py-3 text-sm text-ink">
               {banner}
@@ -200,8 +202,9 @@ export default function BookingFlow() {
           {phase === "done" && result && (
             <SuccessView result={result} slot={slot} leadTimezone={leadTimezone} />
           )}
-        </div>
-      </ResizeAnimator>
+          </div>
+        </ResizeAnimator>
+      </div>
     </>
   );
 }

@@ -233,6 +233,67 @@ body {
   }
 }
 
+/* --- Modal de réservation : sheet mobile / carte desktop ------------------ */
+/* Backdrop : flou + assombrissement (desktop), simple voile (mobile). */
+.nc-booking-backdrop {
+  animation: nc-modal-backdrop-in 240ms var(--ease-signature) both;
+}
+.nc-booking-backdrop.is-closing {
+  animation: nc-modal-backdrop-out 220ms var(--ease-signature) both;
+}
+@keyframes nc-modal-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Mobile : la feuille remonte du bas. */
+.nc-booking-panel {
+  animation: nc-sheet-in 360ms var(--ease-signature) both;
+}
+.nc-booking-panel.is-closing {
+  animation: nc-sheet-out 260ms var(--ease-signature) both;
+}
+@keyframes nc-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes nc-sheet-out {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* Desktop : apparition centrée (fondu + léger zoom). */
+@media (min-width: 640px) {
+  .nc-booking-panel {
+    animation: nc-modal-panel-in 320ms var(--ease-signature) both;
+  }
+  .nc-booking-panel.is-closing {
+    animation: nc-modal-panel-out 240ms var(--ease-signature) both;
+  }
+}
+@keyframes nc-modal-panel-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
+
 /* --- Bordure conique corail rotative (.nc-shine-card) --------------------- */
 @property --nc-shine-angle {
   syntax: "<angle>";

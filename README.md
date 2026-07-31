@@ -75,9 +75,11 @@ Système de prise de rendez-vous full-custom (équivalent Calendly), sans
 dépendance à un service de scheduling payant. Isolé dans son propre module pour
 réutilisation.
 
-- **Route publique** `/rdv` : créneau d'abord, formulaire de qualification
-  ensuite. Créneaux calculés côté serveur (Google freebusy + règles admin),
-  affichés dans le fuseau du lead.
+- **Modal sur la page principale** : le CTA ouvre un modal (backdrop flouté sur
+  desktop, feuille remontant du bas sur mobile). Calendrier mensuel -> choix
+  d'une date -> morphisme vers les créneaux -> formulaire de qualification.
+  Créneaux calculés côté serveur (Google freebusy + règles admin), affichés
+  dans le fuseau du lead (sélecteur de fuseau custom). Pas de route dédiée.
 - **Gestion** `/rdv/manage/[token]` : reprogrammer / annuler via lien tokenisé.
 - **Admin** `/admin` : règles + planning hebdo + réservations à venir
   (protégé par mot de passe, cookie signé — pas de Supabase Auth).
