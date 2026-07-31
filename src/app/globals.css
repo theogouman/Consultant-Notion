@@ -207,6 +207,32 @@ body {
   }
 }
 
+/* --- Modal du formulaire de qualification --------------------------------- */
+.nc-modal-backdrop {
+  animation: nc-modal-backdrop-in 200ms var(--ease-signature) both;
+}
+@keyframes nc-modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.nc-modal-panel {
+  animation: nc-modal-panel-in 320ms var(--ease-signature) both;
+}
+@keyframes nc-modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* --- Bordure conique corail rotative (.nc-shine-card) --------------------- */
 @property --nc-shine-angle {
   syntax: "<angle>";

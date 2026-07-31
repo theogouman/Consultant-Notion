@@ -19,41 +19,6 @@ export const hero = {
   microProof: "+100 entreprises accompagnées · certifications Notion · depuis 2022",
 };
 
-export const problemMirror = {
-  eyebrow: "Le miroir",
-  title: "Vous vous reconnaissez ?",
-  items: [
-    "L’information existe, mais chacun la range à sa façon — la retrouver prend du temps.",
-    "Vos outils se multiplient (drive, mails, tableurs, messagerie) et plus rien n’est vraiment centralisé.",
-    "Vous pilotez votre activité à l’instinct, faute d’une vue claire sur les projets et les priorités.",
-    "Vous avez lancé un Notion, puis il s’est transformé en bazar que plus personne ne maintient.",
-    "Un nouveau collaborateur met des semaines à comprendre où trouver quoi.",
-  ],
-};
-
-export const benefits = {
-  eyebrow: "Ce que vous obtenez",
-  title: "Une organisation qui tient — et que votre équipe utilise vraiment.",
-  items: [
-    {
-      title: "Une source unique de vérité.",
-      body: "L’information à jour, au même endroit, accessible à toute l’équipe. Fini l’archéologie dans les mails et les drives.",
-    },
-    {
-      title: "De la visibilité sur votre activité.",
-      body: "Une vue claire sur vos projets, vos priorités et ce qui avance. Vous pilotez sur des repères fiables, plus à l’instinct.",
-    },
-    {
-      title: "Une équipe qui adopte vraiment.",
-      body: "Un système assez simple pour être utilisé au quotidien — pas un outil de plus qu’on abandonne au bout de trois mois.",
-    },
-    {
-      title: "Un système qui tient dans le temps.",
-      body: "Construit sur vos enjeux, il évolue avec vous et permet à un nouveau collaborateur d’être opérationnel en quelques jours, pas en quelques semaines.",
-    },
-  ],
-};
-
 export const howItWorks = {
   eyebrow: "Comment ça se passe",
   title: "Quatre étapes, du premier appel à la prise en main.",
