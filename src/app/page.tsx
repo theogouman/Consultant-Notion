@@ -1,4 +1,3 @@
-import QualificationProvider from "@/components/form/QualificationProvider";
 import Header from "@/components/sections/Header";
 import Hero from "@/components/sections/Hero";
 import ProofBar from "@/components/sections/ProofBar";
@@ -14,14 +13,14 @@ import Footer from "@/components/sections/Footer";
  * Rendu build-time + ISR : le contenu Notion (études de cas) se rafraîchit
  * toutes les heures sans redéploiement.
  *
- * Le CTA unique ouvre le formulaire de qualification en modal (multi-étapes) —
- * QualificationProvider expose l'ouverture à tous les CtaButton de la page.
+ * Le CTA unique dirige vers /rdv (booker maison) : choix du créneau puis
+ * formulaire de qualification.
  */
 export const revalidate = 3600;
 
 export default function Home() {
   return (
-    <QualificationProvider>
+    <>
       <Header />
       <main>
         <Hero />
@@ -33,6 +32,6 @@ export default function Home() {
         <FinalCta />
       </main>
       <Footer />
-    </QualificationProvider>
+    </>
   );
 }
