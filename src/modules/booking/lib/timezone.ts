@@ -73,6 +73,18 @@ export function formatSlotTime(utcIso: string, zone: string): string {
   return DateTime.fromISO(utcIso, { zone: "utc" }).setZone(zone).toFormat("HH:mm");
 }
 
+/**
+ * Libellé « bannière » d'un créneau : « Vendredi 31 juillet, à 17:00 »
+ * (première lettre capitalisée, fuseau du lead).
+ */
+export function formatSlotBanner(utcIso: string, zone: string): string {
+  const s = DateTime.fromISO(utcIso, { zone: "utc" })
+    .setZone(zone)
+    .setLocale("fr")
+    .toFormat("cccc d LLLL, 'à' HH:mm");
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 /** Libellé de journée (ex. « jeudi 4 septembre ») dans le fuseau du lead. */
 export function formatDayLong(isoDate: string, zone: string): string {
   return DateTime.fromISO(isoDate, { zone }).setLocale("fr").toFormat("cccc d LLLL");

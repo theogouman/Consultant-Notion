@@ -71,6 +71,8 @@ export default function QualificationForm({
   onValuesChange,
   step,
   onStepChange,
+  slotLabel,
+  onModifySlot,
   submitting,
   serverError,
   onSubmit,
@@ -79,6 +81,8 @@ export default function QualificationForm({
   onValuesChange: (patch: Partial<FormValues>) => void;
   step: number;
   onStepChange: (step: number) => void;
+  slotLabel: string;
+  onModifySlot: () => void;
   submitting: boolean;
   serverError: string | null;
   onSubmit: () => void;
@@ -256,6 +260,25 @@ export default function QualificationForm({
 
   return (
     <div>
+      {/* Créneau sélectionné : cliquer revient au calendrier pour le changer. */}
+      <button
+        type="button"
+        onClick={onModifySlot}
+        className="mb-5 inline-flex items-center gap-2.5 rounded-sm bg-raised px-3 py-2 text-left transition-colors hover:bg-line"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/Annexes/clock.arrow.trianglehead.counterclockwise.rotate.90.svg"
+          alt=""
+          aria-hidden
+          className="h-5 w-auto flex-none"
+        />
+        <span className="flex flex-col leading-tight">
+          <span className="text-sm font-medium text-ink">Modifier mon créneau</span>
+          <span className="text-xs text-muted">{slotLabel}</span>
+        </span>
+      </button>
+
       <div className="min-h-[190px]">
         <div ref={stageRef}>
           <h2 className="nc-title mb-4 text-xl sm:text-2xl">{current.question}</h2>
@@ -346,14 +369,14 @@ export default function QualificationForm({
                 <button
                   type="button"
                   onClick={addGuest}
-                  className="inline-flex items-center gap-2 rounded-sm bg-raised px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-line"
+                  className="inline-flex items-center gap-1.5 rounded-sm bg-raised px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-line hover:text-ink"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/images/Annexes/person.crop.circle.badge.plus.svg"
                     alt=""
                     aria-hidden
-                    className="h-5 w-auto"
+                    className="h-4 w-auto"
                   />
                   Inviter une autre personne
                 </button>

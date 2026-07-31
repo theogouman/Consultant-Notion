@@ -7,7 +7,7 @@ import QualificationForm, {
   type FormValues,
 } from "./QualificationForm";
 import ResizeAnimator from "./ResizeAnimator";
-import { formatSlotLong, timezoneParts } from "../lib/timezone";
+import { formatSlotLong, formatSlotBanner, timezoneParts } from "../lib/timezone";
 import {
   getAvailabilityAction,
   createBookingAction,
@@ -165,18 +165,6 @@ export default function BookingFlow() {
 
           {phase === "form" && slot && (
             <>
-              <button
-                type="button"
-                onClick={() => {
-                  setPhase("picking");
-                  setBanner(null);
-                  setServerError(null);
-                }}
-                className="mb-4 inline-flex items-center gap-2 rounded-sm bg-raised px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-line"
-              >
-                <span aria-hidden>⏎</span> Modifier mon créneau
-              </button>
-
               {/* Honeypot anti-bot (hors écran, non focusable). */}
               <input
                 ref={honeypotRef}
@@ -193,6 +181,12 @@ export default function BookingFlow() {
                 onValuesChange={(patch) => setFormValues((v) => ({ ...v, ...patch }))}
                 step={formStep}
                 onStepChange={setFormStep}
+                slotLabel={`${formatSlotBanner(slot.start_utc, leadTimezone)} ${timezoneParts(leadTimezone).flag}`}
+                onModifySlot={() => {
+                  setPhase("picking");
+                  setBanner(null);
+                  setServerError(null);
+                }}
                 submitting={submitting}
                 serverError={serverError}
                 onSubmit={handleSubmit}
@@ -219,11 +213,18 @@ function SuccessView({
   slot: Slot | null;
   leadTimezone: string;
 }) {
-  const when = slot ? capitalize(formatSlotLong(slot.start_utc, leadTimezone)) : "";
   const parts = timezoneParts(leadTimezone);
-  const tz = `${parts.city} ${parts.flag}`;
+  const whenBanner = slot ? formatSlotBanner(slot.start_utc, leadTimezone) : "";
+
+  // Révélation échelonnée du texte (transitions.dev · texts-reveal).
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   if (result.status === "pending_manual") {
+    const when = slot ? capitalize(formatSlotLong(slot.start_utc, leadTimezone)) : "";
     return (
       <div className="py-4 text-center">
         <h2 className="nc-title mb-3 text-2xl">Presque !</h2>
@@ -231,36 +232,36 @@ function SuccessView({
           Nous n'avons pas pu créer l'invitation à l'instant. Pas d'inquiétude :
           je reviens vers vous au plus vite pour confirmer votre créneau.
         </p>
-        {when && <p className="text-sm text-muted">Créneau souhaité : {when} · {tz}</p>}
+        {when && (
+          <p className="text-sm text-muted">
+            Créneau souhaité : {when} · {parts.city} {parts.flag}
+          </p>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="py-4 text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent/10">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path d="M5 12.5l4.5 4.5L19 7.5" stroke="#e0625a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
-      <h2 className="nc-title mb-3 text-2xl">C'est réservé.</h2>
-      {when && (
-        <p className="mb-2 text-[0.95rem] text-ink">
-          <strong>{when}</strong> · {tz}
-        </p>
-      )}
-      <p className="mx-auto mb-5 max-w-md text-sm text-muted">
-        Un e-mail de confirmation vient de vous être envoyé, avec le lien de
-        visio et de quoi ajouter le rendez-vous à votre agenda.
-      </p>
-      {result.meetUrl && (
-        <a
-          href={result.meetUrl}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-medium text-white shadow-[0_8px_24px_-8px_rgba(224,98,90,0.6)] transition-all hover:bg-[#d1504a]"
-        >
-          Rejoindre le Meet
-        </a>
-      )}
+    <div className={`t-stagger py-4 text-center ${shown ? "is-shown" : ""}`}>
+      <span className="t-stagger-line t-stagger-line--1">
+        <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent/10">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M5 12.5l4.5 4.5L19 7.5" stroke="#e0625a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      </span>
+
+      <span className="t-stagger-line t-stagger-line--2 nc-title mb-4 text-xl sm:text-2xl">
+        Notre rendez-vous est confirmé pour le{" "}
+        <span className="mt-1 inline-block rounded-sm bg-raised px-2.5 py-1 text-[0.95rem] font-medium text-ink">
+          {whenBanner}
+        </span>
+      </span>
+
+      <span className="t-stagger-line t-stagger-line--3 mx-auto block max-w-md text-sm text-muted">
+        Un mail de confirmation a été envoyé avec un lien pour reprogrammer si
+        l'horaire ne convient plus
+      </span>
     </div>
   );
 }

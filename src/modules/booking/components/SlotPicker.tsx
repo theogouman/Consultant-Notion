@@ -217,16 +217,13 @@ function MonthGrid({
               disabled={!available}
               onClick={() => onSelect(date)}
               aria-label={formatDayLong(date, leadTimezone)}
-              className={`relative flex aspect-square items-center justify-center rounded-sm text-sm transition-all duration-[200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              className={`flex h-9 items-center justify-center rounded-sm text-sm transition-all duration-[200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
                 available
                   ? "cursor-pointer bg-raised font-medium text-ink hover:bg-accent hover:text-white"
                   : "cursor-default text-muted/40"
               } ${isToday && available ? "ring-1 ring-accent" : ""}`}
             >
               {dayNum}
-              {available && (
-                <span className="absolute bottom-1 h-1 w-1 rounded-full bg-accent" aria-hidden />
-              )}
             </button>
           );
         })}
@@ -369,7 +366,7 @@ function MonthSkeleton() {
       </div>
       <div className="grid grid-cols-7 gap-1">
         {Array.from({ length: 35 }).map((_, i) => (
-          <span key={i} className="nc-skeleton aspect-square rounded-sm" />
+          <span key={i} className="nc-skeleton h-9 rounded-sm" />
         ))}
       </div>
     </div>
