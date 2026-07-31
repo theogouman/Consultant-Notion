@@ -25,6 +25,7 @@ import {
   sendPendingManualAlert,
 } from "./resend";
 import { generateIdempotencyKey } from "../lib/tokens";
+import { splitGuestEmails } from "../lib/validation";
 import type { Booking, QualificationInput } from "../types";
 
 export type CreateOutcome =
@@ -67,7 +68,7 @@ export async function createBooking(
   // c/d. Création de l'event Google (Meet obligatoire). Fallback si échec.
   try {
     const attendees = [{ email: booking.lead_email }];
-    if (booking.guest_email) attendees.push({ email: booking.guest_email });
+    for (const g of splitGuestEmails(booking.guest_email)) attendees.push({ email: g });
 
     const event = await createEvent({
       summary: "Appel de qualification — Théo Gouman",

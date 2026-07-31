@@ -26,8 +26,10 @@ export type FormValues = {
   activity: string;
   situation: string;
   motivation: string;
-  guestEmail: string;
+  guestEmails: string[];
 };
+
+const MAX_GUESTS = 5;
 
 type FieldId = "name" | "email" | "activity" | "situation" | "motivation";
 
@@ -69,8 +71,6 @@ export default function QualificationForm({
   onValuesChange,
   step,
   onStepChange,
-  guestOpen,
-  onGuestOpenChange,
   submitting,
   serverError,
   onSubmit,
@@ -79,8 +79,6 @@ export default function QualificationForm({
   onValuesChange: (patch: Partial<FormValues>) => void;
   step: number;
   onStepChange: (step: number) => void;
-  guestOpen: boolean;
-  onGuestOpenChange: (open: boolean) => void;
   submitting: boolean;
   serverError: string | null;
   onSubmit: () => void;
@@ -156,8 +154,11 @@ export default function QualificationForm({
     const v = raw.trim();
     if (current.id === "email") {
       if (!EMAIL_RE.test(v)) return fail("Adresse e-mail invalide.");
-      if (guestOpen && values.guestEmail.trim() && !EMAIL_RE.test(values.guestEmail.trim())) {
-        return fail("L'e-mail de l'invité est invalide.");
+      // Chaque invité renseigné doit être un e-mail valide.
+      for (const g of values.guestEmails) {
+        if (g.trim() && !EMAIL_RE.test(g.trim())) {
+          return fail("L'e-mail d'un invité est invalide.");
+        }
       }
     } else if (!v) {
       return fail(current.type === "bubbles" ? "Sélectionnez une option." : "Ce champ est requis.");
@@ -216,9 +217,25 @@ export default function QualificationForm({
     window.setTimeout(() => transitionTo(step + 1, 1), 240);
   }
 
-  function setValue(id: keyof FormValues, value: string) {
+  function setValue(id: "name" | "email" | "activity" | "situation" | "motivation", value: string) {
     if (error) clearError();
     onValuesChange({ [id]: value } as Partial<FormValues>);
+  }
+
+  function addGuest() {
+    if (values.guestEmails.length >= MAX_GUESTS) return;
+    clearError();
+    onValuesChange({ guestEmails: [...values.guestEmails, ""] });
+  }
+  function updateGuest(i: number, value: string) {
+    if (error) clearError();
+    const next = values.guestEmails.slice();
+    next[i] = value;
+    onValuesChange({ guestEmails: next });
+  }
+  function removeGuest(i: number) {
+    clearError();
+    onValuesChange({ guestEmails: values.guestEmails.filter((_, idx) => idx !== i) });
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
@@ -297,14 +314,39 @@ export default function QualificationForm({
             </p>
           </div>
 
-          {/* Étape e-mail : inviter une autre personne (sous le champ). */}
+          {/* Étape e-mail : inviter jusqu'à 5 personnes (champs compacts). */}
           {current.id === "email" && (
-            <div className="mt-3">
-              {!guestOpen ? (
+            <div className="mt-3 space-y-2">
+              {values.guestEmails.map((g, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    type="email"
+                    inputMode="email"
+                    autoComplete="off"
+                    placeholder={`E-mail de l'invité ${i + 1}`}
+                    value={g}
+                    onChange={(e) => updateGuest(i, e.target.value)}
+                    onKeyDown={onKeyDown}
+                    className="min-w-0 flex-1 rounded-sm border border-line bg-raised px-3 py-2 text-sm text-ink placeholder:text-muted/60 outline-none transition-colors focus:border-accent focus:bg-card focus:ring-2 focus:ring-accent/20"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeGuest(i)}
+                    aria-label="Retirer l'invité"
+                    className="flex h-8 w-8 flex-none items-center justify-center rounded-sm text-muted transition-colors hover:bg-raised hover:text-accent"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+                      <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+
+              {values.guestEmails.length < MAX_GUESTS && (
                 <button
                   type="button"
-                  onClick={() => onGuestOpenChange(true)}
-                  className="inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-accent"
+                  onClick={addGuest}
+                  className="inline-flex items-center gap-2 rounded-sm bg-raised px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-line"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -315,20 +357,6 @@ export default function QualificationForm({
                   />
                   Inviter une autre personne
                 </button>
-              ) : (
-                <div>
-                  <label className="mb-1 block text-sm text-muted">E-mail de l'invité</label>
-                  <input
-                    type="email"
-                    inputMode="email"
-                    autoComplete="off"
-                    placeholder="collegue@entreprise.fr"
-                    value={values.guestEmail}
-                    onChange={(e) => setValue("guestEmail", e.target.value)}
-                    onKeyDown={onKeyDown}
-                    className="w-full rounded-sm border border-line bg-raised px-4 py-3 text-[1rem] text-ink placeholder:text-muted/60 outline-none transition-colors focus:border-accent focus:bg-card focus:ring-2 focus:ring-accent/20"
-                  />
-                </div>
               )}
             </div>
           )}

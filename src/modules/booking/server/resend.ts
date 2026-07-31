@@ -7,6 +7,7 @@
 import "server-only";
 import { Resend } from "resend";
 import { buildIcs } from "./ics";
+import { splitGuestEmails } from "../lib/validation";
 import {
   confirmationEmail,
   internalNotificationEmail,
@@ -31,10 +32,10 @@ function client(): Resend {
 const EVENT_SUMMARY = "Appel de qualification — Théo Gouman";
 const EVENT_DESCRIPTION = "Appel de qualification avec Théo Gouman.";
 
-/** Destinataires lead (+ guest éventuel), dédupliqués. */
+/** Destinataires lead (+ invités éventuels), dédupliqués. */
 function leadRecipients(booking: Booking): string[] {
   const set = new Set<string>([booking.lead_email]);
-  if (booking.guest_email) set.add(booking.guest_email);
+  for (const g of splitGuestEmails(booking.guest_email)) set.add(g);
   return [...set];
 }
 

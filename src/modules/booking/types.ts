@@ -84,7 +84,8 @@ export interface QualificationInput {
   activity: string;
   situation: Situation;
   motivation: string;
-  guestEmail?: string;
+  /** Jusqu'à 5 invités (e-mails). Stockés en base en liste séparée par virgules. */
+  guestEmails?: string[];
   /** Honeypot anti-bot : doit rester vide. */
   company?: string;
 }

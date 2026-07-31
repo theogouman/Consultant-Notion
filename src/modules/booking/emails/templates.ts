@@ -117,7 +117,7 @@ export function internalNotificationEmail(booking: Booking): EmailContent {
   const rows = [
     ["Nom", booking.lead_name],
     ["E-mail", booking.lead_email],
-    ["Invité", booking.guest_email ?? "—"],
+    ["Invité(s)", booking.guest_email ?? "—"],
     ["Créneau", slotLine(booking)],
     ["Activité", booking.activity],
     ["Situation", situation],

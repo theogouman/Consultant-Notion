@@ -117,12 +117,7 @@ export default function SlotPicker({
     <div>
       <div ref={stageRef}>
         {loading ? (
-          <div className="flex min-h-[260px] items-center justify-center text-muted">
-            <span className="inline-flex items-center gap-2 text-sm">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-accent" />
-              Recherche des créneaux disponibles…
-            </span>
-          </div>
+          <MonthSkeleton />
         ) : days.length === 0 ? (
           <div className="flex min-h-[260px] flex-col items-center justify-center gap-2 text-center">
             <p className="text-base font-medium text-ink">Aucun créneau disponible pour le moment.</p>
@@ -143,10 +138,12 @@ export default function SlotPicker({
           />
         ) : (
           <DaySlots
-            date={activeDate!}
+            days={days}
+            activeDate={activeDate!}
             slots={availByDate.get(activeDate!) ?? []}
             leadTimezone={leadTimezone}
             onBack={backToMonth}
+            onChangeDate={setActiveDate}
             onSelect={onSelect}
           />
         )}
@@ -255,24 +252,28 @@ function NavButton({ dir, disabled, onClick }: { dir: "prev" | "next"; disabled:
 }
 
 /* -------------------------------------------------------------------------- */
-/* Horaires d'un jour                                                         */
+/* Horaires d'un jour (+ liste de jours pour changer sans revenir au mois)     */
 /* -------------------------------------------------------------------------- */
 function DaySlots({
-  date,
+  days,
+  activeDate,
   slots,
   leadTimezone,
   onBack,
+  onChangeDate,
   onSelect,
 }: {
-  date: string;
+  days: AvailableDay[];
+  activeDate: string;
   slots: Slot[];
   leadTimezone: string;
   onBack: () => void;
+  onChangeDate: (date: string) => void;
   onSelect: (slot: Slot) => void;
 }) {
   return (
     <div>
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 flex items-center gap-2 pr-12">
         <button
           type="button"
           onClick={onBack}
@@ -284,8 +285,21 @@ function DaySlots({
           </svg>
         </button>
         <h3 className="text-sm font-semibold text-ink">
-          {capitalize(formatDayLong(date, leadTimezone))}
+          {capitalize(formatDayLong(activeDate, leadTimezone))}
         </h3>
+      </div>
+
+      {/* Liste de jours : changer de jour sans repasser par le calendrier.
+          Chaque case = jour (lettres), numéro, mois. Changement instantané. */}
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+        {days.map((d) => (
+          <DayCard
+            key={d.date}
+            date={d.date}
+            active={d.date === activeDate}
+            onClick={() => onChangeDate(d.date)}
+          />
+        ))}
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -298,6 +312,64 @@ function DaySlots({
           >
             {formatSlotTime(slot.start_utc, leadTimezone)}
           </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DayCard({
+  date,
+  active,
+  onClick,
+}: {
+  date: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const dt = DateTime.fromISO(date).setLocale("fr");
+  const weekday = dt.toFormat("ccc").replace(".", ""); // "lun"
+  const dayNum = dt.toFormat("d");
+  const month = dt.toFormat("LLL").replace(".", ""); // "août"
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`flex min-w-[64px] flex-none flex-col items-center rounded-sm border px-3 py-2 transition-all duration-[200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        active
+          ? "border-accent bg-accent/5 text-accent"
+          : "border-line bg-card text-ink hover:border-accent/50"
+      }`}
+    >
+      <span className="text-[0.7rem] uppercase tracking-wide text-muted">{weekday}</span>
+      <span className="text-lg font-semibold leading-tight">{dayNum}</span>
+      <span className="text-[0.7rem] text-muted">{month}</span>
+    </button>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Skeleton de chargement du calendrier                                       */
+/* -------------------------------------------------------------------------- */
+function MonthSkeleton() {
+  return (
+    <div aria-hidden>
+      <div className="mb-4 flex items-center justify-between">
+        <span className="nc-skeleton h-8 w-8 rounded-full" />
+        <span className="nc-skeleton h-4 w-28 rounded-sm" />
+        <span className="nc-skeleton h-8 w-8 rounded-full" />
+      </div>
+      <div className="mb-2 grid grid-cols-7 gap-1">
+        {WEEKDAYS.map((w) => (
+          <span key={w} className="py-1 text-center text-[0.7rem] font-medium uppercase tracking-wide text-muted/50">
+            {w}
+          </span>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {Array.from({ length: 35 }).map((_, i) => (
+          <span key={i} className="nc-skeleton aspect-square rounded-sm" />
         ))}
       </div>
     </div>

@@ -99,7 +99,10 @@ export async function insertConfirmedBooking(params: {
       lead_timezone: params.leadTimezone,
       lead_name: params.input.name,
       lead_email: params.input.email,
-      guest_email: params.input.guestEmail ?? null,
+      guest_email:
+        params.input.guestEmails && params.input.guestEmails.length
+          ? params.input.guestEmails.join(", ")
+          : null,
       activity: params.input.activity,
       situation: params.input.situation,
       motivation: params.input.motivation,

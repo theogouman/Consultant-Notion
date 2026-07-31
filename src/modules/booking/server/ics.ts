@@ -8,6 +8,7 @@
 
 import "server-only";
 import { DateTime } from "../lib/timezone";
+import { splitGuestEmails } from "../lib/validation";
 import type { Booking, Settings } from "../types";
 
 /** Format ICS d'un instant UTC : YYYYMMDDTHHMMSSZ. */
@@ -69,8 +70,8 @@ export function buildIcs({
   const attendees: string[] = [
     `ATTENDEE;CN=${esc(booking.lead_name)};RSVP=TRUE:mailto:${booking.lead_email}`,
   ];
-  if (booking.guest_email) {
-    attendees.push(`ATTENDEE;RSVP=TRUE:mailto:${booking.guest_email}`);
+  for (const g of splitGuestEmails(booking.guest_email)) {
+    attendees.push(`ATTENDEE;RSVP=TRUE:mailto:${g}`);
   }
 
   const lines = [

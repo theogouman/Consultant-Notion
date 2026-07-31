@@ -23,7 +23,7 @@ const EMPTY_VALUES: FormValues = {
   activity: "",
   situation: "",
   motivation: "",
-  guestEmail: "",
+  guestEmails: [],
 };
 
 /**
@@ -44,9 +44,11 @@ export default function BookingFlow() {
   const [result, setResult] = useState<(BookingActionResult & { ok: true }) | null>(null);
 
   // État du formulaire, conservé entre les phases.
-  const [formValues, setFormValues] = useState<FormValues>({ ...EMPTY_VALUES });
+  const [formValues, setFormValues] = useState<FormValues>({
+    ...EMPTY_VALUES,
+    guestEmails: [],
+  });
   const [formStep, setFormStep] = useState(0);
-  const [guestOpen, setGuestOpen] = useState(false);
   const honeypotRef = useRef<HTMLInputElement>(null);
 
   const refreshAvailability = useCallback(async (tz: string) => {
@@ -92,7 +94,7 @@ export default function BookingFlow() {
         activity: formValues.activity.trim(),
         situation: formValues.situation as Situation,
         motivation: formValues.motivation.trim(),
-        guestEmail: guestOpen && formValues.guestEmail.trim() ? formValues.guestEmail.trim() : undefined,
+        guestEmails: formValues.guestEmails.map((g) => g.trim()).filter(Boolean),
         company: honeypotRef.current?.value || "",
         startUtc: slot.start_utc,
         leadTimezone,
@@ -130,7 +132,7 @@ export default function BookingFlow() {
         </div>
       )}
 
-      <div className="min-h-0 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto sm:flex-initial">
         <ResizeAnimator>
           <div className="p-6 sm:p-8">
           {banner && (
@@ -141,7 +143,8 @@ export default function BookingFlow() {
 
           {phase === "picking" && (
             <>
-              <header className="mb-6">
+              {/* pr-12 : réserve la place de la croix de fermeture. */}
+              <header className="mb-6 pr-12">
                 <h1 className="nc-title text-2xl sm:text-3xl">
                   Quel serait le meilleur moment pour toi ?
                 </h1>
@@ -190,8 +193,6 @@ export default function BookingFlow() {
                 onValuesChange={(patch) => setFormValues((v) => ({ ...v, ...patch }))}
                 step={formStep}
                 onStepChange={setFormStep}
-                guestOpen={guestOpen}
-                onGuestOpenChange={setGuestOpen}
                 submitting={submitting}
                 serverError={serverError}
                 onSubmit={handleSubmit}

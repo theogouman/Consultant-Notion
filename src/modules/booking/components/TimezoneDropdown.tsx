@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   TIMEZONE_OPTIONS,
@@ -36,12 +36,24 @@ export default function TimezoneDropdown({
 
   const current = timezoneParts(value);
 
-  // Positionne le popover sous le bouton (coordonnées viewport, position fixed).
+  // Positionne le popover sous le bouton, ou AU-DESSUS s'il n'y a pas la place
+  // (cas mobile où le sélecteur est en bas de la feuille). Recalculé au scroll
+  // et au resize (au lieu de se fermer).
+  const reposition = useCallback(() => {
+    const btn = btnRef.current;
+    if (!btn) return;
+    const r = btn.getBoundingClientRect();
+    // Hauteur estimée du popover (bornée à 256px = max-h-64).
+    const estimated = Math.min(options.length * 40 + 10, 256);
+    const spaceBelow = window.innerHeight - r.bottom;
+    const flipUp = spaceBelow < estimated + 12 && r.top > spaceBelow;
+    const top = flipUp ? Math.max(8, r.top - estimated - 6) : r.bottom + 6;
+    setPos({ top, right: window.innerWidth - r.right });
+  }, [options.length]);
+
   useLayoutEffect(() => {
-    if (!open || !btnRef.current) return;
-    const r = btnRef.current.getBoundingClientRect();
-    setPos({ top: r.bottom + 6, right: window.innerWidth - r.right });
-  }, [open]);
+    if (open) reposition();
+  }, [open, reposition]);
 
   useEffect(() => {
     if (!open) return;
@@ -53,20 +65,18 @@ export default function TimezoneDropdown({
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
     }
-    function onScrollOrResize() {
-      setOpen(false);
-    }
     document.addEventListener("mousedown", onDocClick);
     document.addEventListener("keydown", onKey);
-    window.addEventListener("resize", onScrollOrResize);
-    window.addEventListener("scroll", onScrollOrResize, true);
+    window.addEventListener("resize", reposition);
+    // Suivre le scroll (dans le modal comme dans la page) sans se fermer.
+    window.addEventListener("scroll", reposition, true);
     return () => {
       document.removeEventListener("mousedown", onDocClick);
       document.removeEventListener("keydown", onKey);
-      window.removeEventListener("resize", onScrollOrResize);
-      window.removeEventListener("scroll", onScrollOrResize, true);
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", reposition, true);
     };
-  }, [open]);
+  }, [open, reposition]);
 
   return (
     <>

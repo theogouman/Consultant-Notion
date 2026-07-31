@@ -15,6 +15,7 @@ const MAX = {
   email: 200,
   activity: 200,
   motivation: 4000,
+  guests: 5,
 };
 
 export function isEmail(v: string): boolean {
@@ -38,7 +39,6 @@ export function validateQualification(
   const activity = (input.activity ?? "").trim();
   const motivation = (input.motivation ?? "").trim();
   const situation = input.situation;
-  const guestEmailRaw = (input.guestEmail ?? "").trim().toLowerCase();
 
   if (!name || name.length > MAX.name) {
     return { ok: false, error: "Nom complet requis." };
@@ -55,8 +55,17 @@ export function validateQualification(
   if (!motivation || motivation.length > MAX.motivation) {
     return { ok: false, error: "Motivation requise." };
   }
-  if (guestEmailRaw && !isEmail(guestEmailRaw)) {
-    return { ok: false, error: "L'e-mail de l'invité est invalide." };
+
+  // Jusqu'à 5 invités, dédupliqués, chacun valide. Exclut l'e-mail du lead.
+  const guestEmails: string[] = [];
+  const rawGuests = Array.isArray(input.guestEmails) ? input.guestEmails : [];
+  for (const raw of rawGuests.slice(0, MAX.guests)) {
+    const g = String(raw ?? "").trim().toLowerCase();
+    if (!g) continue;
+    if (!isEmail(g) || g.length > MAX.email) {
+      return { ok: false, error: "L'e-mail d'un invité est invalide." };
+    }
+    if (g !== email && !guestEmails.includes(g)) guestEmails.push(g);
   }
 
   return {
@@ -67,7 +76,7 @@ export function validateQualification(
       activity,
       situation,
       motivation,
-      guestEmail: guestEmailRaw || undefined,
+      guestEmails,
     },
   };
 }
@@ -75,4 +84,13 @@ export function validateQualification(
 /** Valide un instant ISO (créneau) : doit être une date valide, alignée. */
 export function isIsoInstant(v: unknown): v is string {
   return typeof v === "string" && !Number.isNaN(Date.parse(v));
+}
+
+/** Colonne `guest_email` (liste séparée par virgules) -> tableau d'e-mails. */
+export function splitGuestEmails(guestEmail: string | null | undefined): string[] {
+  if (!guestEmail) return [];
+  return guestEmail
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
