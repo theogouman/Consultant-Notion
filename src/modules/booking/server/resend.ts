@@ -7,6 +7,7 @@
 import "server-only";
 import { Resend } from "resend";
 import { buildIcs } from "./ics";
+import { eventSummary, eventDescriptionText } from "./event-content";
 import { splitGuestEmails } from "../lib/validation";
 import {
   confirmationEmail,
@@ -28,9 +29,6 @@ function client(): Resend {
   cached = new Resend(key);
   return cached;
 }
-
-const EVENT_SUMMARY = "Appel de qualification — Théo Gouman";
-const EVENT_DESCRIPTION = "Appel de qualification avec Théo Gouman.";
 
 /** Destinataires lead (+ invités éventuels), dédupliqués. */
 function leadRecipients(booking: Booking): string[] {
@@ -70,8 +68,8 @@ function icsFor(
     content: buildIcs({
       booking,
       settings,
-      summary: EVENT_SUMMARY,
-      description: EVENT_DESCRIPTION,
+      summary: eventSummary(booking),
+      description: eventDescriptionText(booking, settings),
       method,
     }),
   };

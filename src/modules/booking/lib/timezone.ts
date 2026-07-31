@@ -90,6 +90,18 @@ export function formatDayLong(isoDate: string, zone: string): string {
   return DateTime.fromISO(isoDate, { zone }).setLocale("fr").toFormat("cccc d LLLL");
 }
 
+/** Jour de la semaine capitalisé (ex. « Mardi ») d'un instant UTC dans `zone`. */
+export function formatWeekday(utcIso: string, zone: string): string {
+  const s = DateTime.fromISO(utcIso, { zone: "utc" }).setZone(zone).setLocale("fr").toFormat("cccc");
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** Date longue (ex. « Vendredi 31 juillet ») d'un instant UTC dans `zone`. */
+export function formatDateLong(utcIso: string, zone: string): string {
+  const s = DateTime.fromISO(utcIso, { zone: "utc" }).setZone(zone).setLocale("fr").toFormat("cccc d LLLL");
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 /** Nom court du fuseau (ex. « UTC+2 », « CEST ») pour lever toute ambiguïté. */
 export function timezoneAbbrev(utcIso: string, zone: string): string {
   return (

@@ -26,6 +26,7 @@ import {
 } from "./resend";
 import { generateIdempotencyKey } from "../lib/tokens";
 import { splitGuestEmails } from "../lib/validation";
+import { eventSummary, eventDescriptionHtml } from "./event-content";
 import type { Booking, QualificationInput } from "../types";
 
 export type CreateOutcome =
@@ -71,8 +72,8 @@ export async function createBooking(
     for (const g of splitGuestEmails(booking.guest_email)) attendees.push({ email: g });
 
     const event = await createEvent({
-      summary: "Appel de qualification — Théo Gouman",
-      description: buildEventDescription(booking),
+      summary: eventSummary(booking),
+      description: eventDescriptionHtml(booking, settings),
       startUtc: booking.start_utc,
       endUtc: booking.end_utc,
       attendees,
@@ -159,16 +160,4 @@ export async function cancelExisting(bookingId: string): Promise<CancelOutcome> 
   const booking = await cancelBooking(bookingId);
   await sendCancellation(booking, settings);
   return { status: "cancelled", booking };
-}
-
-function buildEventDescription(booking: Booking): string {
-  const situation =
-    booking.situation === "notion_mal"
-      ? "On utilise déjà Notion, mais mal"
-      : "On n'a pas d'outil d'organisation";
-  return [
-    `Activité : ${booking.activity}`,
-    `Situation : ${situation}`,
-    `Motivation : ${booking.motivation}`,
-  ].join("\n");
 }
