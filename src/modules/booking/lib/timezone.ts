@@ -85,6 +85,50 @@ export function timezoneAbbrev(utcIso: string, zone: string): string {
   );
 }
 
+/**
+ * Fuseaux proposés dans le sélecteur : ville capitale (en français) + drapeau.
+ * La capitale partage le fuseau du pays (Paris/France, Bruxelles/Belgique…),
+ * ce qui rend le libellé plus clair qu'un « GMT+2 » abstrait.
+ */
+export interface TimezoneOption {
+  tz: string;
+  city: string;
+  flag: string;
+}
+
+export const TIMEZONE_OPTIONS: TimezoneOption[] = [
+  { tz: "Europe/Paris", city: "Paris", flag: "🇫🇷" },
+  { tz: "Europe/Brussels", city: "Bruxelles", flag: "🇧🇪" },
+  { tz: "Europe/Zurich", city: "Berne", flag: "🇨🇭" },
+  { tz: "Europe/Luxembourg", city: "Luxembourg", flag: "🇱🇺" },
+  { tz: "Europe/Monaco", city: "Monaco", flag: "🇲🇨" },
+  { tz: "America/Toronto", city: "Ottawa", flag: "🇨🇦" },
+  { tz: "Africa/Casablanca", city: "Rabat", flag: "🇲🇦" },
+  { tz: "Africa/Dakar", city: "Dakar", flag: "🇸🇳" },
+  { tz: "Europe/London", city: "Londres", flag: "🇬🇧" },
+  { tz: "Europe/Madrid", city: "Madrid", flag: "🇪🇸" },
+  { tz: "Europe/Lisbon", city: "Lisbonne", flag: "🇵🇹" },
+  { tz: "Europe/Berlin", city: "Berlin", flag: "🇩🇪" },
+  { tz: "Europe/Rome", city: "Rome", flag: "🇮🇹" },
+];
+
+const TZ_BY_ID = new Map(TIMEZONE_OPTIONS.map((o) => [o.tz, o]));
+
+/** Ville (français) + drapeau depuis un IANA — repli sur la dernière portion. */
+export function timezoneParts(tz: string): { city: string; flag: string } {
+  const known = TZ_BY_ID.get(tz);
+  if (known) return { city: known.city, flag: known.flag };
+  // Repli : « Europe/Some_City » -> « Some City » 🌍
+  const last = tz.split("/").pop() ?? tz;
+  return { city: last.replace(/_/g, " "), flag: "🌍" };
+}
+
+/** Libellé complet du fuseau : « Horaire de Paris 🇫🇷 ». */
+export function timezoneLabel(tz: string): string {
+  const { city, flag } = timezoneParts(tz);
+  return `Horaire de ${city} ${flag}`;
+}
+
 /** Clé jour-de-semaine Luxon (1=lundi) -> notre clé de planning. */
 const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 export function weekdayKey(dt: DateTime): (typeof WEEKDAY_KEYS)[number] {

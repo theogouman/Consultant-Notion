@@ -28,16 +28,9 @@ export default function RdvPage() {
         </Link>
       </div>
 
-      <div className="w-full max-w-xl rounded-md bg-card p-6 nc-shadow-2 sm:p-8">
-        <header className="mb-6">
-          <p className="nc-eyebrow mb-2">Appel de qualification</p>
-          <h1 className="nc-title text-2xl sm:text-3xl">Faisons le point.</h1>
-          <p className="mt-2 text-[0.95rem] text-muted">
-            20 minutes, gratuit, sans engagement. Je vous dis franchement si je
-            peux vous aider.
-          </p>
-        </header>
-
+      {/* Carte-modal. Padding + barre de progression gérés dans BookingFlow ;
+          `relative` positionne la barre collée au haut de la carte. */}
+      <div className="relative w-full max-w-xl rounded-md bg-card nc-shadow-2">
         <BookingFlow />
       </div>
     </main>

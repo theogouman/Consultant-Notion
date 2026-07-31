@@ -1,22 +1,36 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import SlotPicker from "./SlotPicker";
-import QualificationForm from "./QualificationForm";
-import { formatSlotLong, timezoneAbbrev } from "../lib/timezone";
+import QualificationForm, {
+  QUALIFICATION_STEPS_COUNT,
+  type FormValues,
+} from "./QualificationForm";
+import ResizeAnimator from "./ResizeAnimator";
+import { formatSlotLong, timezoneParts } from "../lib/timezone";
 import {
   getAvailabilityAction,
   createBookingAction,
   type BookingActionResult,
 } from "@/app/rdv/actions";
-import type { AvailableDay, QualificationInput, Slot } from "../types";
+import type { AvailableDay, Situation, Slot } from "../types";
 
 type Phase = "picking" | "form" | "done";
 
+const EMPTY_VALUES: FormValues = {
+  name: "",
+  email: "",
+  activity: "",
+  situation: "",
+  motivation: "",
+  guestEmail: "",
+};
+
 /**
  * Orchestrateur du booker public : créneau d'abord, formulaire ensuite.
- * Détecte le fuseau du lead via le navigateur, charge les disponibilités,
- * puis crée la réservation (revalidation + Google + Resend côté serveur).
+ * L'état du formulaire vit ici -> revenir au calendrier ne perd pas les réponses.
+ * La barre de progression est collée au haut du modal pendant le formulaire ;
+ * l'en-tête (titre/sous-titre) ne s'affiche que sur l'écran de choix du créneau.
  */
 export default function BookingFlow() {
   const [leadTimezone, setLeadTimezone] = useState<string>("Europe/Paris");
@@ -27,7 +41,13 @@ export default function BookingFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
-  const [result, setResult] = useState<BookingActionResult & { ok: true } | null>(null);
+  const [result, setResult] = useState<(BookingActionResult & { ok: true }) | null>(null);
+
+  // État du formulaire, conservé entre les phases.
+  const [formValues, setFormValues] = useState<FormValues>({ ...EMPTY_VALUES });
+  const [formStep, setFormStep] = useState(0);
+  const [guestOpen, setGuestOpen] = useState(false);
+  const honeypotRef = useRef<HTMLInputElement>(null);
 
   const refreshAvailability = useCallback(async (tz: string) => {
     setLoading(true);
@@ -56,13 +76,24 @@ export default function BookingFlow() {
     setPhase("form");
   }
 
-  async function handleSubmit(input: QualificationInput) {
+  function handleTimezoneChange(tz: string) {
+    setLeadTimezone(tz);
+    refreshAvailability(tz);
+  }
+
+  async function handleSubmit() {
     if (!slot) return;
     setSubmitting(true);
     setServerError(null);
     try {
       const res = await createBookingAction({
-        ...input,
+        name: formValues.name.trim(),
+        email: formValues.email.trim(),
+        activity: formValues.activity.trim(),
+        situation: formValues.situation as Situation,
+        motivation: formValues.motivation.trim(),
+        guestEmail: guestOpen && formValues.guestEmail.trim() ? formValues.guestEmail.trim() : undefined,
+        company: honeypotRef.current?.value || "",
         startUtc: slot.start_utc,
         leadTimezone,
       });
@@ -70,7 +101,6 @@ export default function BookingFlow() {
         setResult(res);
         setPhase("done");
       } else if (res.code === "slot_taken" || res.code === "unavailable") {
-        // Le créneau a été pris entre-temps : retour à la liste, rafraîchie.
         setBanner(res.error);
         setPhase("picking");
         setSlot(null);
@@ -85,58 +115,94 @@ export default function BookingFlow() {
     }
   }
 
-  if (phase === "done" && result) {
-    return <SuccessView result={result} slot={slot} leadTimezone={leadTimezone} />;
-  }
+  const progress = ((formStep + 1) / QUALIFICATION_STEPS_COUNT) * 100;
 
   return (
-    <div>
-      {banner && (
-        <div className="mb-4 rounded-sm border border-accent/30 bg-accent/5 px-4 py-3 text-sm text-ink">
-          {banner}
+    <>
+      {/* Barre de progression collée au haut du modal (phase formulaire). */}
+      {phase === "form" && (
+        <div className="absolute inset-x-0 top-0 z-10 h-1 overflow-hidden rounded-t-md bg-raised">
+          <div
+            className="h-full bg-accent transition-[width] duration-[300ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       )}
 
-      {phase === "picking" && (
-        <>
-          <p className="mb-5 text-sm text-muted">
-            Choisissez un créneau. Les horaires s'affichent dans votre fuseau.
-          </p>
-          <SlotPicker
-            days={days}
-            leadTimezone={leadTimezone}
-            loading={loading}
-            onSelect={handleSelect}
-          />
-        </>
-      )}
+      <ResizeAnimator>
+        <div className="p-6 sm:p-8">
+          {banner && (
+            <div className="mb-4 rounded-sm border border-accent/30 bg-accent/5 px-4 py-3 text-sm text-ink">
+              {banner}
+            </div>
+          )}
 
-      {phase === "form" && slot && (
-        <>
-          <button
-            type="button"
-            onClick={() => {
-              setPhase("picking");
-              setBanner(null);
-            }}
-            className="mb-4 inline-flex items-center gap-2 rounded-sm bg-raised px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-line"
-          >
-            <span aria-hidden>←</span>
-            {capitalize(formatSlotLong(slot.start_utc, leadTimezone))} (
-            {timezoneAbbrev(slot.start_utc, leadTimezone)})
-          </button>
-          <QualificationForm
-            submitting={submitting}
-            serverError={serverError}
-            onSubmit={handleSubmit}
-            onBackToSlots={() => {
-              setPhase("picking");
-              setServerError(null);
-            }}
-          />
-        </>
-      )}
-    </div>
+          {phase === "picking" && (
+            <>
+              <header className="mb-6">
+                <h1 className="nc-title text-2xl sm:text-3xl">
+                  Quel serait le meilleur moment pour toi ?
+                </h1>
+                <p className="mt-2 text-[0.95rem] text-muted">
+                  Réserve le créneau qui te convient pour qu'on réalise un audit
+                  sur ton organisation actuelle
+                </p>
+              </header>
+              <SlotPicker
+                days={days}
+                leadTimezone={leadTimezone}
+                loading={loading}
+                onSelect={handleSelect}
+                onTimezoneChange={handleTimezoneChange}
+              />
+            </>
+          )}
+
+          {phase === "form" && slot && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setPhase("picking");
+                  setBanner(null);
+                  setServerError(null);
+                }}
+                className="mb-4 inline-flex items-center gap-2 rounded-sm bg-raised px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-line"
+              >
+                <span aria-hidden>⏎</span> Modifier mon créneau
+              </button>
+
+              {/* Honeypot anti-bot (hors écran, non focusable). */}
+              <input
+                ref={honeypotRef}
+                type="text"
+                name="company"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="absolute left-[-9999px] h-0 w-0 opacity-0"
+              />
+
+              <QualificationForm
+                values={formValues}
+                onValuesChange={(patch) => setFormValues((v) => ({ ...v, ...patch }))}
+                step={formStep}
+                onStepChange={setFormStep}
+                guestOpen={guestOpen}
+                onGuestOpenChange={setGuestOpen}
+                submitting={submitting}
+                serverError={serverError}
+                onSubmit={handleSubmit}
+              />
+            </>
+          )}
+
+          {phase === "done" && result && (
+            <SuccessView result={result} slot={slot} leadTimezone={leadTimezone} />
+          )}
+        </div>
+      </ResizeAnimator>
+    </>
   );
 }
 
@@ -150,7 +216,8 @@ function SuccessView({
   leadTimezone: string;
 }) {
   const when = slot ? capitalize(formatSlotLong(slot.start_utc, leadTimezone)) : "";
-  const tz = slot ? timezoneAbbrev(slot.start_utc, leadTimezone) : "";
+  const parts = timezoneParts(leadTimezone);
+  const tz = `${parts.city} ${parts.flag}`;
 
   if (result.status === "pending_manual") {
     return (
@@ -160,7 +227,7 @@ function SuccessView({
           Nous n'avons pas pu créer l'invitation à l'instant. Pas d'inquiétude :
           je reviens vers vous au plus vite pour confirmer votre créneau.
         </p>
-        {when && <p className="text-sm text-muted">Créneau souhaité : {when} ({tz})</p>}
+        {when && <p className="text-sm text-muted">Créneau souhaité : {when} · {tz}</p>}
       </div>
     );
   }
@@ -175,7 +242,7 @@ function SuccessView({
       <h2 className="nc-title mb-3 text-2xl">C'est réservé.</h2>
       {when && (
         <p className="mb-2 text-[0.95rem] text-ink">
-          <strong>{when}</strong> ({tz})
+          <strong>{when}</strong> · {tz}
         </p>
       )}
       <p className="mx-auto mb-5 max-w-md text-sm text-muted">

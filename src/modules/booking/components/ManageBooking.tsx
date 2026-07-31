@@ -29,31 +29,34 @@ export default function ManageBooking(props: ManageBookingProps) {
   const alreadyCancelled = props.status === "cancelled";
   const [view, setView] = useState<View>(alreadyCancelled ? "cancelled" : "overview");
   const [currentStart, setCurrentStart] = useState(props.startUtc);
+  const [tz, setTz] = useState(props.leadTimezone);
   const [days, setDays] = useState<AvailableDay[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const when = (iso: string) =>
-    capitalize(formatSlotLong(iso, props.leadTimezone)) +
-    ` (${timezoneAbbrev(iso, props.leadTimezone)})`;
+    capitalize(formatSlotLong(iso, tz)) + ` (${timezoneAbbrev(iso, tz)})`;
 
-  const loadAvailability = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getManageAvailabilityAction(props.token, props.leadTimezone);
-      setDays(data.days);
-    } catch {
-      setError("Impossible de charger les créneaux. Réessayez.");
-    } finally {
-      setLoading(false);
-    }
-  }, [props.token, props.leadTimezone]);
+  const loadAvailability = useCallback(
+    async (zone: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getManageAvailabilityAction(props.token, zone);
+        setDays(data.days);
+      } catch {
+        setError("Impossible de charger les créneaux. Réessayez.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [props.token],
+  );
 
   useEffect(() => {
-    if (view === "reschedule") loadAvailability();
-  }, [view, loadAvailability]);
+    if (view === "reschedule") loadAvailability(tz);
+  }, [view, tz, loadAvailability]);
 
   async function onPickNewSlot(slot: Slot) {
     setBusy(true);
@@ -65,7 +68,7 @@ export default function ManageBooking(props: ManageBookingProps) {
       setView("rescheduled");
     } else if (!res.ok && (res.code === "slot_taken" || res.code === "unavailable")) {
       setError(res.error);
-      loadAvailability();
+      loadAvailability(tz);
     } else if (!res.ok) {
       setError(res.error);
     }
@@ -131,9 +134,10 @@ export default function ManageBooking(props: ManageBookingProps) {
         <div className={busy ? "pointer-events-none opacity-60" : ""}>
           <SlotPicker
             days={days}
-            leadTimezone={props.leadTimezone}
+            leadTimezone={tz}
             loading={loading}
             onSelect={onPickNewSlot}
+            onTimezoneChange={setTz}
           />
         </div>
       </div>

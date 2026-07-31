@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { formatSlotTime, formatDayLong, timezoneAbbrev } from "../lib/timezone";
+import { formatSlotTime, formatDayLong } from "../lib/timezone";
+import TimezoneDropdown from "./TimezoneDropdown";
 import type { AvailableDay, Slot } from "../types";
 
 /**
@@ -14,11 +15,13 @@ export default function SlotPicker({
   leadTimezone,
   loading,
   onSelect,
+  onTimezoneChange,
 }: {
   days: AvailableDay[];
   leadTimezone: string;
   loading: boolean;
   onSelect: (slot: Slot) => void;
+  onTimezoneChange: (tz: string) => void;
 }) {
   const [activeDate, setActiveDate] = useState<string | null>(null);
 
@@ -33,66 +36,62 @@ export default function SlotPicker({
     }
   }, [days]);
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[220px] items-center justify-center text-muted">
-        <span className="inline-flex items-center gap-2 text-sm">
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-accent" />
-          Recherche des créneaux disponibles…
-        </span>
-      </div>
-    );
-  }
-
-  if (days.length === 0) {
-    return (
-      <div className="flex min-h-[220px] flex-col items-center justify-center gap-2 text-center">
-        <p className="text-base font-medium text-ink">Aucun créneau disponible pour le moment.</p>
-        <p className="text-sm text-muted">
-          Revenez un peu plus tard, de nouveaux créneaux s'ouvrent régulièrement.
-        </p>
-      </div>
-    );
-  }
-
-  const active = days.find((d) => d.date === activeDate) ?? days[0];
-  const tz = active.slots[0] ? timezoneAbbrev(active.slots[0].start_utc, leadTimezone) : "";
+  const active = !loading && days.length > 0 ? days.find((d) => d.date === activeDate) ?? days[0] : null;
 
   return (
     <div>
-      {/* Bandeau de dates (défilement horizontal) */}
-      <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
-        {days.map((d) => (
-          <DayChip
-            key={d.date}
-            day={d}
-            timezone={leadTimezone}
-            active={d.date === active.date}
-            onClick={() => setActiveDate(d.date)}
-          />
-        ))}
-      </div>
-
-      <div className="mb-3 flex items-baseline justify-between">
+      {/* Bandeau supérieur : jour actif + sélecteur de fuseau (toujours visible) */}
+      <div className="mb-3 flex items-baseline justify-between gap-3">
         <h3 className="text-sm font-medium text-ink">
-          {capitalize(formatDayLong(active.date, leadTimezone))}
+          {active ? capitalize(formatDayLong(active.date, leadTimezone)) : "Créneaux"}
         </h3>
-        {tz && <span className="text-xs text-muted">Horaires en {tz}</span>}
+        <TimezoneDropdown value={leadTimezone} onChange={onTimezoneChange} />
       </div>
 
-      {/* Grille des horaires */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {active.slots.map((slot) => (
-          <button
-            key={slot.start_utc}
-            type="button"
-            onClick={() => onSelect(slot)}
-            className="rounded-sm border border-line bg-raised px-3 py-2.5 text-center text-[0.95rem] font-medium text-ink transition-all duration-[200ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-accent hover:bg-accent/5 hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-          >
-            {formatSlotTime(slot.start_utc, leadTimezone)}
-          </button>
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex min-h-[220px] items-center justify-center text-muted">
+          <span className="inline-flex items-center gap-2 text-sm">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-accent" />
+            Recherche des créneaux disponibles…
+          </span>
+        </div>
+      ) : !active ? (
+        <div className="flex min-h-[220px] flex-col items-center justify-center gap-2 text-center">
+          <p className="text-base font-medium text-ink">Aucun créneau disponible pour le moment.</p>
+          <p className="text-sm text-muted">
+            Revenez un peu plus tard, de nouveaux créneaux s'ouvrent régulièrement.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Bandeau de dates (défilement horizontal) */}
+          <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+            {days.map((d) => (
+              <DayChip
+                key={d.date}
+                day={d}
+                timezone={leadTimezone}
+                active={d.date === active.date}
+                onClick={() => setActiveDate(d.date)}
+              />
+            ))}
+          </div>
+
+          {/* Grille des horaires */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {active.slots.map((slot) => (
+              <button
+                key={slot.start_utc}
+                type="button"
+                onClick={() => onSelect(slot)}
+                className="rounded-sm border border-line bg-raised px-3 py-2.5 text-center text-[0.95rem] font-medium text-ink transition-all duration-[200ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-accent hover:bg-accent/5 hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              >
+                {formatSlotTime(slot.start_utc, leadTimezone)}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
