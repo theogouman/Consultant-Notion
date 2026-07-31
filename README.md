@@ -21,7 +21,14 @@ npm run dev                  # http://localhost:3000
 | --- | --- | --- |
 | `NOTION_API_TOKEN` | **serveur, secret** | Token de l'intégration Notion. Jamais exposé au client, jamais committé. |
 | `NOTION_CASE_STUDIES_DATABASE_ID` | serveur | ID de la base études de cas (défaut : `a9a77a8e49af4c83bb6c3cfc67706b20`). |
-| `NEXT_PUBLIC_BOOKING_URL` | public | Lien de prise de rendez-vous (destination du formulaire). **[À AFFINER]** |
+| `NEXT_PUBLIC_BASE_URL` | public | URL de base publique (liens manage + add-to-calendar des e-mails). |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | **serveur, secret** | App OAuth2 Google existante. |
+| `GOOGLE_REFRESH_TOKEN` | **serveur, secret** | Refresh token offline de Théo (app en statut Production). |
+| `GOOGLE_CALENDAR_ID` | serveur | Agenda host (`theo@gouman.fr`). |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | **serveur, secret** | Accès base (server-only, bypass RLS). |
+| `RESEND_API_KEY` | **serveur, secret** | Envoi de tous les e-mails. |
+| `ADMIN_PASSWORD` / `ADMIN_SESSION_SECRET` | **serveur, secret** | Accès `/admin` + signature du cookie de session. |
+| `CRON_SECRET` | **serveur, secret** | Protège `/api/cron/reminders` (en-tête `x-cron-secret`). |
 
 À enregistrer dans les variables d'environnement Vercel. Sans
 `NOTION_API_TOKEN`, le build reste fonctionnel : la grille d'études de cas
@@ -39,14 +46,15 @@ src/
 │   ├── icon.svg / robots / sitemap
 ├── components/
 │   ├── sections/          # Les 11 blocs de la landing + Header/Footer
-│   ├── ui/                # CtaButton (CTA unique), Section, Reveal
-│   ├── form/              # QualificationForm (§9)
+│   ├── ui/                # CtaButton (CTA unique → /rdv), Section, Reveal
 │   ├── case-studies/      # Grille + cartes (filtres par secteur)
 │   └── notion/            # Moteur morph iOS + NotionRenderer
-└── lib/
-    ├── content.ts         # Tout le copy (zones [À AFFINER] regroupées)
-    ├── spring.ts          # Physique du morph (constantes exactes)
-    └── notion/            # client (server-only) · router · case-studies · types
+├── lib/
+│   ├── content.ts         # Tout le copy (zones [À AFFINER] regroupées)
+│   ├── spring.ts          # Physique du morph (constantes exactes)
+│   └── notion/            # client (server-only) · router · case-studies · types
+├── middleware.ts          # Protection /admin (cookie signé)
+└── modules/booking/       # Booker maison, isolé et réutilisable (voir plus bas)
 ```
 
 ## Études de cas (Notion)
@@ -60,6 +68,51 @@ d'édition, la page reste rapide, le contenu se rafraîchit sans redéploiement.
   fait un fondu enchaîné. Fermeture par clic hors panneau, bouton ×, ou Échap.
   Navigation cas précédent / suivant aux flèches ← →.
 - `prefers-reduced-motion` désactive le morph (ouverture/fermeture nettes).
+
+## Booker maison (`src/modules/booking/`)
+
+Système de prise de rendez-vous full-custom (équivalent Calendly), sans
+dépendance à un service de scheduling payant. Isolé dans son propre module pour
+réutilisation.
+
+- **Modal sur la page principale** : le CTA ouvre un modal (backdrop flouté sur
+  desktop, feuille remontant du bas sur mobile). Calendrier mensuel -> choix
+  d'une date -> morphisme vers les créneaux -> formulaire de qualification.
+  Créneaux calculés côté serveur (Google freebusy + règles admin), affichés
+  dans le fuseau du lead (sélecteur de fuseau custom). Pas de route dédiée.
+- **Gestion** `/rdv/manage/[token]` : reprogrammer / annuler via lien tokenisé.
+- **Admin** `/admin` : règles + planning hebdo + réservations à venir
+  (protégé par mot de passe, cookie signé — pas de Supabase Auth).
+- **E-mails** : 100 % via Resend (confirmation, reprogrammation, annulation,
+  rappel H-3, notifications internes) avec `.ics` + add-to-calendar.
+- **Fuseaux** : stockage UTC, calculs via Luxon, aucun offset manuel.
+
+```
+src/modules/booking/
+├── server/       # supabase · settings · google · availability · bookings · resend · ics · flow
+├── components/   # BookingFlow · SlotPicker · QualificationForm · ManageBooking
+├── admin/        # SettingsForm · BookingsList
+├── emails/       # templates (voix de Théo) · links
+├── lib/          # timezone (Luxon) · tokens · validation · rate-limit · admin-auth
+└── types.ts
+```
+
+### Mise en place (une fois)
+
+1. **Base** : appliquer `supabase/migrations/0001_booking_schema.sql` (tables
+   `settings` + `bookings`, index anti-double-booking, seed). Déjà appliqué sur
+   le projet Supabase existant.
+2. **Variables d'env** Vercel : voir le tableau ci-dessus (Google, Supabase,
+   Resend, admin, cron).
+3. **Resend** : authentifier `consultant-notion.fr` (SPF + DKIM + DMARC).
+4. **Google** : app OAuth en statut **Production**, scopes Calendar autorisés,
+   `GOOGLE_REFRESH_TOKEN` d'un accès offline de Théo.
+5. **Rappel H-3** : après le premier déploiement, exécuter
+   `supabase/migrations/0002_booking_reminders_cron.sql` (planifie pg_cron →
+   `/api/cron/reminders` via pg_net, secret dans Supabase Vault). Inclut aussi
+   la purge RGPD (> 12 mois).
+
+Tests fuseaux (bascules d'heure incluses) : `npm test`.
 
 ## Design system
 
@@ -78,9 +131,15 @@ Regroupés dans `src/lib/content.ts` :
 4. Certifications Notion exactes (bloc 9)
 5. YouTube / newsletter — inclure ou non (bloc 9)
 6. Réponses FAQ (bloc 10) — rédigées provisoirement, à valider
-7. `NEXT_PUBLIC_BOOKING_URL` (`.env`)
-8. Placeholder « activité » — version large retenue, à confirmer
+7. Placeholder « activité » — version large retenue, à confirmer
 
-> Le formulaire redirige vers `NEXT_PUBLIC_BOOKING_URL` sans transmettre de
-> données en query string. Pour capturer les réponses (CRM / webhook), voir
-> le `TODO` dans `src/components/form/QualificationForm.tsx`.
+### Booker — points à confirmer (§15 du brief)
+
+1. **Règle de reprogrammation** : défaut = tout créneau futur valide (≥ délai
+   mini). À confirmer, ou ajouter « pas plus tôt que l'actuel ».
+2. **Expéditeur** : défaut `rdv@consultant-notion.fr` (Reply-To
+   `theo@gouman.fr`). Éditable en admin.
+3. **Plages de disponibilité** initiales : Lun–Ven 09:00–12:00 / 14:00–18:00
+   (semées en base, éditables en admin).
+4. **Textes des e-mails** : rédigés dans la voix de Théo (`emails/templates.ts`),
+   à valider.

@@ -4,11 +4,8 @@
  * complétées sans toucher aux composants.
  */
 
-export const BOOKING_URL =
-  process.env.NEXT_PUBLIC_BOOKING_URL || "https://cal.com/theo-gouman";
-
-/** Ancre du formulaire de qualification — cible unique de tous les CTA. */
-export const CTA_HREF = "#rendez-vous";
+/** Cible unique de tous les CTA : la route du booker maison. */
+export const CTA_HREF = "/rdv";
 export const CTA_LABEL = "Faire le point sur mon organisation";
 
 export const hero = {

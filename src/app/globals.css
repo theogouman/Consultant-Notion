@@ -18,21 +18,21 @@
    En leur absence, la stack de repli (-apple-system…) prend le relais.        */
 @font-face {
   font-family: "SF Pro Display";
-  src: url("/fonts/SFProDisplay-Regular.otf") format("opentype");
+  src: url("/fonts/SFPRODISPLAYREGULAR.OTF") format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "SF Pro Display";
-  src: url("/fonts/SFProDisplay-Medium.otf") format("opentype");
+  src: url("/fonts/SFPRODISPLAYMEDIUM.OTF") format("opentype");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "SF Pro Display";
-  src: url("/fonts/SFProDisplay-Bold.otf") format("opentype");
+  src: url("/fonts/SFPRODISPLAYBOLD.OTF") format("opentype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -233,6 +233,133 @@ body {
   }
 }
 
+/* --- Modal de réservation : sheet mobile / carte desktop ------------------ */
+/* Backdrop : flou + assombrissement (desktop), simple voile (mobile). */
+.nc-booking-backdrop {
+  animation: nc-modal-backdrop-in 240ms var(--ease-signature) both;
+}
+.nc-booking-backdrop.is-closing {
+  animation: nc-modal-backdrop-out 220ms var(--ease-signature) both;
+}
+@keyframes nc-modal-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Mobile : la feuille remonte du bas. */
+.nc-booking-panel {
+  animation: nc-sheet-in 360ms var(--ease-signature) both;
+}
+.nc-booking-panel.is-closing {
+  animation: nc-sheet-out 260ms var(--ease-signature) both;
+}
+@keyframes nc-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes nc-sheet-out {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* Desktop : apparition centrée (fondu + léger zoom). */
+@media (min-width: 640px) {
+  .nc-booking-panel {
+    animation: nc-modal-panel-in 320ms var(--ease-signature) both;
+  }
+  .nc-booking-panel.is-closing {
+    animation: nc-modal-panel-out 240ms var(--ease-signature) both;
+  }
+}
+@keyframes nc-modal-panel-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
+
+/* --- Révélation de texte échelonnée (transitions.dev · texts-reveal) ------- */
+:root {
+  --stagger-dur: 500ms;
+  --stagger-distance: 12px;
+  --stagger-stagger: 40ms;
+  --stagger-blur: 3px;
+  --stagger-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.t-stagger-line {
+  display: block;
+  opacity: 0;
+  transform: translateY(var(--stagger-distance));
+  filter: blur(var(--stagger-blur));
+  transition:
+    opacity var(--stagger-dur) var(--stagger-ease),
+    transform var(--stagger-dur) var(--stagger-ease),
+    filter var(--stagger-dur) var(--stagger-ease);
+  will-change: transform, opacity, filter;
+}
+.t-stagger-line--2 {
+  transition-delay: var(--stagger-stagger);
+}
+.t-stagger-line--3 {
+  transition-delay: calc(var(--stagger-stagger) * 2);
+}
+.t-stagger.is-shown .t-stagger-line {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .t-stagger-line {
+    transition: none !important;
+  }
+}
+
+/* --- Skeleton de chargement (shimmer) ------------------------------------- */
+.nc-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-raised);
+}
+.nc-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 0, 0, 0.05),
+    transparent
+  );
+  animation: nc-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes nc-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nc-skeleton::after {
+    animation: none;
+  }
+}
+
 /* --- Bordure conique corail rotative (.nc-shine-card) --------------------- */
 @property --nc-shine-angle {
   syntax: "<angle>";
@@ -271,6 +398,80 @@ body {
 @keyframes nc-shine-rotate {
   to {
     --nc-shine-angle: 360deg;
+  }
+}
+
+/* --- Redimensionnement animé du modal (transitions.dev · card-resize) ------ */
+:root {
+  --resize-dur: 300ms;
+  --resize-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.t-resize {
+  transition:
+    width var(--resize-dur) var(--resize-ease),
+    height var(--resize-dur) var(--resize-ease);
+  will-change: height;
+}
+
+/* --- État d'erreur : secousse (transitions.dev · error-state-shake) -------- */
+:root {
+  --shake-distance: 6px;
+  --shake-overshoot: 4px;
+  --shake-dur-a: 80ms;
+  --shake-dur-b: 60ms;
+  --shake-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --revert-hold: 3000ms;
+  --revert-dur: 280ms;
+}
+.t-input {
+  /* border-color pour l'erreur + height pour l'auto-grow des textareas. */
+  transition:
+    border-color 150ms ease-out,
+    height var(--resize-dur) var(--resize-ease);
+  will-change: transform;
+}
+.t-input.is-error {
+  transition:
+    border-color var(--revert-dur) ease-out,
+    height var(--resize-dur) var(--resize-ease);
+}
+.t-error-msg {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--revert-dur) ease-out,
+    visibility 0s linear var(--revert-dur);
+}
+.t-input-wrap.is-error .t-error-msg {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--revert-dur) ease-out,
+    visibility 0s linear 0s;
+}
+.t-input.is-shaking {
+  animation: t-input-shake
+    calc(var(--shake-dur-a) * 2 + var(--shake-dur-b) * 2) linear;
+}
+@keyframes t-input-shake {
+  0% {
+    transform: translateX(0);
+    animation-timing-function: var(--shake-ease);
+  }
+  28.57% {
+    transform: translateX(var(--shake-distance));
+    animation-timing-function: var(--shake-ease);
+  }
+  57.14% {
+    transform: translateX(calc(var(--shake-distance) * -1));
+    animation-timing-function: var(--shake-ease);
+  }
+  78.57% {
+    transform: translateX(var(--shake-overshoot));
+    animation-timing-function: var(--shake-ease);
+  }
+  100% {
+    transform: translateX(0);
   }
 }
 

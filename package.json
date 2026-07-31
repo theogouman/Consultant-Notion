@@ -7,19 +7,25 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --import tsx --test \"src/**/*.test.ts\""
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.111.0",
+    "luxon": "^3.7.2",
     "next": "15.4.11",
     "react": "19.1.1",
-    "react-dom": "19.1.1"
+    "react-dom": "19.1.1",
+    "resend": "^6.18.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.11",
+    "@types/luxon": "^3.7.2",
     "@types/node": "22.15.3",
     "@types/react": "19.1.9",
     "@types/react-dom": "19.1.7",
     "tailwindcss": "4.1.11",
+    "tsx": "^4.23.1",
     "typescript": "5.8.3"
   }
 }
