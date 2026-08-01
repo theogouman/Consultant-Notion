@@ -19,7 +19,7 @@ import {
   pendingManualAlertEmail,
   type EmailContent,
 } from "../emails/templates";
-import type { Booking, Settings } from "../types";
+import type { Booking, CancelFeedback, Settings } from "../types";
 
 let cached: Resend | null = null;
 function client(): Resend {
@@ -63,8 +63,14 @@ function icsFor(
   settings: Settings,
   method: "REQUEST" | "CANCEL",
 ): { filename: string; content: string } {
+  // Nom du fichier = titre de l'invitation (caractères de système de fichiers
+  // interdits retirés).
+  const safeName = eventSummary(booking)
+    .replace(/[/\\:*?"<>|]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
   return {
-    filename: "rendez-vous.ics",
+    filename: `${safeName}.ics`,
     content: buildIcs({
       booking,
       settings,
@@ -102,8 +108,13 @@ export async function sendReschedule(booking: Booking, settings: Settings): Prom
   });
 }
 
-/** Annulation (lead) + notification interne à Théo, avec .ics CANCEL. */
-export async function sendCancellation(booking: Booking, settings: Settings): Promise<void> {
+/** Annulation (lead) + notification interne à Théo, avec .ics CANCEL.
+ *  `feedback` (facultatif) enrichit la notification interne (motif + détails). */
+export async function sendCancellation(
+  booking: Booking,
+  settings: Settings,
+  feedback?: CancelFeedback,
+): Promise<void> {
   await Promise.allSettled([
     send({
       settings,
@@ -114,7 +125,7 @@ export async function sendCancellation(booking: Booking, settings: Settings): Pr
     send({
       settings,
       to: [settings.reply_to],
-      content: internalCancellationEmail(booking),
+      content: internalCancellationEmail(booking, feedback),
     }),
   ]);
 }

@@ -268,6 +268,23 @@ function DaySlots({
   onChangeDate: (date: string) => void;
   onSelect: (slot: Slot) => void;
 }) {
+  const dayListRef = useRef<HTMLDivElement>(null);
+
+  // Règle : le jour sélectionné est toujours recentré dans la liste horizontale
+  // (jours précédents visibles à gauche, suivants à droite).
+  useEffect(() => {
+    const container = dayListRef.current;
+    if (!container) return;
+    const active = container.querySelector<HTMLElement>('[data-active="true"]');
+    if (!active) return;
+    const target = active.offsetLeft - (container.clientWidth - active.offsetWidth) / 2;
+    const max = container.scrollWidth - container.clientWidth;
+    container.scrollTo({
+      left: Math.max(0, Math.min(target, max)),
+      behavior: reducedMotion() ? "auto" : "smooth",
+    });
+  }, [activeDate]);
+
   return (
     <div>
       <div className="mb-4 flex items-center gap-2 pr-12">
@@ -287,8 +304,9 @@ function DaySlots({
       </div>
 
       {/* Liste de jours : changer de jour sans repasser par le calendrier.
-          Chaque case = jour (lettres), numéro, mois. Changement instantané. */}
-      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+          Chaque case = jour (lettres), numéro, mois. Changement instantané.
+          `relative` : offsetLeft des cases est relatif à ce conteneur (recentrage). */}
+      <div ref={dayListRef} className="relative mb-4 flex gap-2 overflow-x-auto pb-1">
         {days.map((d) => (
           <DayCard
             key={d.date}
@@ -333,10 +351,11 @@ function DayCard({
       type="button"
       onClick={onClick}
       aria-pressed={active}
+      data-active={active}
       className={`flex min-w-[64px] flex-none flex-col items-center rounded-sm border px-3 py-2 transition-all duration-[200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
         active
           ? "border-accent bg-accent/5 text-accent"
-          : "border-line bg-card text-ink hover:border-accent/50"
+          : "border-line bg-card text-ink hover:border-accent/40 hover:bg-raised"
       }`}
     >
       <span className="text-[0.7rem] uppercase tracking-wide text-muted">{weekday}</span>

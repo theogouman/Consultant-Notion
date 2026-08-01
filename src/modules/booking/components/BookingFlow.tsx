@@ -251,14 +251,16 @@ function SuccessView({
         </span>
       </span>
 
-      <span className="t-stagger-line t-stagger-line--2 nc-title mb-4 text-xl sm:text-2xl">
-        Notre rendez-vous est confirmé pour le{" "}
-        <span className="mt-1 inline-block rounded-sm bg-raised px-2.5 py-1 text-[0.95rem] font-medium text-ink">
+      <span className="t-stagger-line t-stagger-line--2 mb-4 block">
+        <span className="nc-title nc-balance-wide block text-xl sm:text-2xl">
+          Notre rendez-vous est confirmé pour le
+        </span>
+        <span className="nc-title mt-2.5 inline-block rounded-md bg-raised px-3.5 py-1 text-xl leading-tight sm:text-2xl">
           {whenBanner}
         </span>
       </span>
 
-      <span className="t-stagger-line t-stagger-line--3 mx-auto block max-w-md text-sm text-muted">
+      <span className="t-stagger-line t-stagger-line--3 nc-balance-wide block text-[1.0625rem] leading-snug text-muted">
         Un mail de confirmation a été envoyé avec un lien pour reprogrammer si
         l'horaire ne convient plus
       </span>

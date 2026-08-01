@@ -4,10 +4,12 @@
  */
 
 import "server-only";
+import { after } from "next/server";
 import { getSettings } from "./settings";
+import { DateTime } from "../lib/timezone";
 import {
-  isSlotStillAvailable,
-  slotEndFor,
+  isWithinBookableWindow,
+  invalidateAvailabilityCache,
 } from "./availability";
 import {
   insertConfirmedBooking,
@@ -16,6 +18,7 @@ import {
   rescheduleBooking,
   cancelBooking,
   getBookingById,
+  insertCancellationFeedback,
 } from "./bookings";
 import { createEvent, updateEventTime, deleteEvent } from "./google";
 import {
@@ -27,7 +30,7 @@ import {
 import { generateIdempotencyKey } from "../lib/tokens";
 import { splitGuestEmails } from "../lib/validation";
 import { eventSummary, eventDescriptionHtml } from "./event-content";
-import type { Booking, QualificationInput } from "../types";
+import type { Booking, CancelFeedback, QualificationInput } from "../types";
 
 export type CreateOutcome =
   | { status: "confirmed"; booking: Booking }
@@ -49,11 +52,18 @@ export async function createBooking(
 ): Promise<CreateOutcome> {
   const settings = await getSettings();
 
-  // a. Revalidation (freebusy + bookings) juste avant d'écrire.
-  const available = await isSlotStillAvailable(startUtcIso, leadTimezone);
-  if (!available) return { status: "unavailable" };
+  // a. Garde-fou PUR (sans réseau) : refuse un créneau passé / hors fenêtre.
+  //    On NE relance PAS le calcul complet de disponibilité (freebusy) ici : il
+  //    coûte autant que le chargement du calendrier et alourdit la confirmation.
+  //    L'anti-double-booking est garanti par l'index unique partiel à l'insert.
+  if (!isWithinBookableWindow(startUtcIso, settings)) {
+    return { status: "unavailable" };
+  }
 
-  const endUtcIso = await slotEndFor(startUtcIso);
+  // Fin calculée à partir de la durée (pas de nouvel appel getSettings).
+  const endUtcIso = DateTime.fromISO(startUtcIso, { zone: "utc" })
+    .plus({ minutes: settings.call_duration_min })
+    .toISO()!;
 
   // b/c. Insertion CONFIRMÉE : l'index unique partiel arbitre la concurrence.
   const inserted = await insertConfirmedBooking({
@@ -63,6 +73,9 @@ export async function createBooking(
     input,
   });
   if (!inserted.ok) return { status: "slot_taken" };
+
+  // Le créneau vient d'être pris -> les disponibilités en cache sont périmées.
+  invalidateAvailabilityCache();
 
   let booking = inserted.booking;
 
@@ -82,19 +95,30 @@ export async function createBooking(
 
     booking = await attachGoogleEvent(booking.id, event.id, event.meetUrl);
 
-    // e. Mails de confirmation + notification interne.
-    await sendConfirmation(booking, settings);
+    // e. Mails de confirmation + notification interne EN ARRIÈRE-PLAN : le lead
+    //    arrive sur l'écran de confirmation sans attendre Resend.
+    const confirmed = booking;
+    after(async () => {
+      try {
+        await sendConfirmation(confirmed, settings);
+      } catch (mailErr) {
+        console.error("[booking] Échec e-mail confirmation:", mailErr);
+      }
+    });
     return { status: "confirmed", booking };
   } catch (err) {
     // Fallback Google indisponible : on conserve la ligne en pending_manual.
     console.error("[booking] Échec création event Google:", err);
     booking = await markPendingManual(booking.id);
-    // Resend est indépendant de Google -> l'alerte part quand même.
-    try {
-      await sendPendingManualAlert(booking, settings);
-    } catch (mailErr) {
-      console.error("[booking] Échec alerte pending_manual:", mailErr);
-    }
+    // Alerte interne en arrière-plan (Resend est indépendant de Google).
+    const pending = booking;
+    after(async () => {
+      try {
+        await sendPendingManualAlert(pending, settings);
+      } catch (mailErr) {
+        console.error("[booking] Échec alerte pending_manual:", mailErr);
+      }
+    });
     return { status: "pending_manual", booking };
   }
 }
@@ -114,27 +138,39 @@ export async function rescheduleExisting(
   const current = await getBookingById(bookingId);
   if (!current || current.status === "cancelled") return { status: "not_found" };
 
-  const available = await isSlotStillAvailable(startUtcIso, current.lead_timezone);
-  if (!available) return { status: "unavailable" };
-
-  const endUtcIso = await slotEndFor(startUtcIso);
+  // Chemin critique minimal : on calcule la fin à partir de la durée (pas de
+  // recalcul de disponibilité/freebusy ici — l'index unique arbitre les
+  // conflits, et les créneaux affichés viennent d'être calculés). Cela rend la
+  // confirmation quasi instantanée.
+  const endUtcIso = DateTime.fromISO(startUtcIso, { zone: "utc" })
+    .plus({ minutes: settings.call_duration_min })
+    .toISO()!;
 
   const result = await rescheduleBooking(bookingId, startUtcIso, endUtcIso);
   if (!result.ok) return { status: "slot_taken" };
 
-  let booking = result.booking;
+  // Ancien et nouveau créneaux ont changé de statut -> cache périmé.
+  invalidateAvailabilityCache();
 
-  // Mise à jour de l'event Google (même event, SEQUENCE ICS incrémenté).
-  if (booking.google_event_id) {
-    try {
-      await updateEventTime(booking.google_event_id, booking.start_utc, booking.end_utc);
-    } catch (err) {
-      console.error("[booking] Échec update event Google (reschedule):", err);
+  const booking = result.booking;
+
+  // Travail non bloquant (Google + e-mail) exécuté APRÈS la réponse, pour que
+  // l'utilisateur arrive immédiatement sur l'écran de confirmation.
+  after(async () => {
+    if (booking.google_event_id) {
+      try {
+        await updateEventTime(booking.google_event_id, booking.start_utc, booking.end_utc);
+      } catch (err) {
+        console.error("[booking] Échec update event Google (reschedule):", err);
+      }
     }
-  }
+    try {
+      await sendReschedule(booking, settings);
+    } catch (err) {
+      console.error("[booking] Échec e-mail reprogrammation:", err);
+    }
+  });
 
-  await sendReschedule(booking, settings);
-  booking = (await getBookingById(bookingId)) ?? booking;
   return { status: "confirmed", booking };
 }
 
@@ -142,8 +178,12 @@ export type CancelOutcome =
   | { status: "cancelled"; booking: Booking }
   | { status: "not_found" };
 
-/** Annulation (§6) : supprimer l'event Google -> statut cancelled -> mails. */
-export async function cancelExisting(bookingId: string): Promise<CancelOutcome> {
+/** Annulation (§6) : supprimer l'event Google -> statut cancelled -> mails.
+ *  `feedback` (facultatif) = retour du questionnaire d'annulation -> notif Théo. */
+export async function cancelExisting(
+  bookingId: string,
+  feedback?: CancelFeedback,
+): Promise<CancelOutcome> {
   const settings = await getSettings();
   const current = await getBookingById(bookingId);
   if (!current) return { status: "not_found" };
@@ -158,6 +198,18 @@ export async function cancelExisting(bookingId: string): Promise<CancelOutcome> 
   }
 
   const booking = await cancelBooking(bookingId);
-  await sendCancellation(booking, settings);
+  // Le créneau se libère -> cache de disponibilités périmé.
+  invalidateAvailabilityCache();
+
+  // Enregistrement du motif (best-effort : ne bloque pas l'annulation).
+  if (feedback) {
+    try {
+      await insertCancellationFeedback(booking, feedback);
+    } catch (err) {
+      console.error("[booking] Échec enregistrement motif annulation:", err);
+    }
+  }
+
+  await sendCancellation(booking, settings, feedback);
   return { status: "cancelled", booking };
 }

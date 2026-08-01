@@ -18,7 +18,8 @@ import {
   googleCalendarUrl,
   outlookCalendarUrl,
 } from "./links";
-import type { Booking } from "../types";
+import { summarizeCancelFeedback } from "../lib/cancel";
+import type { Booking, CancelFeedback } from "../types";
 
 /** Liens « découvrir mon travail » (configurables en env — défauts à affiner). */
 const YOUTUBE_URL = process.env.YOUTUBE_URL || "https://www.youtube.com/@theogouman";
@@ -41,7 +42,7 @@ const INK = "#111111";
 const MUTED = "#52525b";
 
 function layout(bodyHtml: string): string {
-  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>@media only screen and (max-width:480px){.ps-cell{display:block!important;width:100%!important;padding:0 0 8px 0!important}}</style></head>
 <body style="margin:0;padding:0;background:#f5f2f2;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2f2;padding:32px 16px;">
 <tr><td align="center">
@@ -77,7 +78,7 @@ function iconButton(
   label: string,
   iconFile: string,
   variant: "primary" | "solid" | "soft" = "soft",
-  iconSize = 18,
+  iconSize = 15,
 ): string {
   const styles =
     variant === "primary"
@@ -85,15 +86,15 @@ function iconButton(
       : variant === "solid"
         ? `background:#111111;color:#ffffff;border:1px solid #111111;`
         : `background:#f5f5f5;color:${INK};border:1px solid #e5e7eb;`;
-  return `<a href="${href}" style="display:inline-block;text-decoration:none;font-weight:600;font-size:14px;line-height:${iconSize}px;padding:10px 16px;border-radius:12px;${styles}">
-<img src="${asset(iconFile)}" width="${iconSize}" height="${iconSize}" alt="" style="vertical-align:middle;border:0;margin-right:8px;">
+  return `<a href="${href}" style="display:inline-block;text-decoration:none;font-weight:600;font-size:13px;line-height:${iconSize}px;padding:7px 13px;border-radius:10px;${styles}">
+<img src="${asset(iconFile)}" width="${iconSize}" height="${iconSize}" alt="" style="vertical-align:middle;border:0;margin-right:7px;">
 <span style="vertical-align:middle;">${label}</span></a>`;
 }
 
-/** Petit bouton discret pour les liens de bas de page (PS). */
-function smallLinkButton(href: string, label: string, iconFile: string): string {
-  return `<a href="${href}" style="display:inline-block;text-decoration:none;font-size:13px;font-weight:500;color:${INK};background:#f5f5f5;border:1px solid #e5e7eb;padding:8px 12px;border-radius:10px;margin:0 6px 8px 0;">
-<img src="${asset(iconFile)}" width="15" height="15" alt="" style="vertical-align:middle;border:0;margin-right:6px;">
+/** Bouton PS pleine largeur (rempli sa cellule de tableau). */
+function psButton(href: string, label: string, iconFile: string): string {
+  return `<a href="${href}" style="display:block;text-align:center;text-decoration:none;font-size:12.5px;font-weight:500;color:${INK};background:#f5f5f5;border:1px solid #e5e7eb;padding:8px 10px;border-radius:10px;">
+<img src="${asset(iconFile)}" width="14" height="14" alt="" style="vertical-align:middle;border:0;margin-right:6px;">
 <span style="vertical-align:middle;">${label}</span></a>`;
 }
 
@@ -104,6 +105,16 @@ function dateChip(text: string): string {
 
 function p(text: string): string {
   return `<p style="margin:0 0 16px;font-size:15px;line-height:1.65;color:${INK};">${text}</p>`;
+}
+
+/** Échappe le HTML (texte libre issu d'un formulaire public). */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function slotLine(booking: Booking): string {
@@ -135,7 +146,8 @@ export function confirmationEmail(booking: Booking): EmailContent {
   const weekday = formatWeekday(booking.start_utc, booking.lead_timezone);
   const manage = manageUrl(booking);
 
-  const avatar = `<img src="${asset("theo-avatar-email.png")}" width="44" height="44" alt="Théo Gouman" style="border-radius:9999px;display:block;border:0;">`;
+  // Image entière (pas de recadrage circulaire) : léger arrondi seulement.
+  const avatar = `<img src="${asset("theo-avatar-email.png")}" width="44" height="44" alt="Théo Gouman" style="border-radius:10px;display:block;border:0;">`;
 
   const meetBlock = booking.meet_url
     ? p(iconButton(booking.meet_url, "Rejoindre le Google Meet", "google-meet-icon-sm.png", "solid"))
@@ -144,8 +156,7 @@ export function confirmationEmail(booking: Booking): EmailContent {
   const html = layout(
     `<div style="margin:0 0 20px;">${avatar}</div>` +
       `<h1 style="margin:0 0 20px;font-size:21px;font-weight:700;letter-spacing:-0.02em;line-height:1.35;color:${INK};">Notre rendez-vous est confirmé pour le ${dateChip(banner)}</h1>` +
-      p("Hello,") +
-      p("C'est Théo Gouman, consultant Notion.") +
+      p("Hello,<br>C'est Théo Gouman, consultant Notion.") +
       p("Je me permets de t'écrire pour te donner quelques informations suite à l'appel que tu viens de confirmer.") +
       p("Déjà, l'appel aura lieu sur Google Meet. Voici le lien sur lequel on se connectera :") +
       meetBlock +
@@ -159,7 +170,13 @@ export function confirmationEmail(booking: Booking): EmailContent {
       p(`À ${weekday} ! :)<br>Théo`) +
       `<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">` +
       `<p style="margin:0 0 12px;font-size:14px;color:${MUTED};">PS : Voici quelques liens pour découvrir mon travail 👇🏻</p>` +
-      `<div>${smallLinkButton(YOUTUBE_URL, "Voir les vidéos YouTube →", "youtube-icon.png")}${smallLinkButton(LINKEDIN_URL, "Voir mon LinkedIn →", "linkedin-icon.png")}${smallLinkButton(CASE_STUDIES_URL, "Voir mes études de cas →", "bookmark-fill.png")}</div>`,
+      // Sur desktop : 3 boutons sur une seule ligne (table). Sur mobile : ils
+      // s'empilent (media query .ps-cell dans le <head>).
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+<td class="ps-cell" width="33.33%" valign="middle" style="padding:0 4px 0 0;">${psButton(YOUTUBE_URL, "Voir les vidéos YouTube →", "youtube-icon.png")}</td>
+<td class="ps-cell" width="33.33%" valign="middle" style="padding:0 2px;">${psButton(LINKEDIN_URL, "Voir mon LinkedIn →", "linkedin-icon.png")}</td>
+<td class="ps-cell" width="33.33%" valign="middle" style="padding:0 0 0 4px;">${psButton(CASE_STUDIES_URL, "Voir mes études de cas →", "bookmark-fill.png")}</td>
+</tr></table>`,
   );
 
   const text = `Hello,
@@ -285,14 +302,36 @@ Théo`;
 /* -------------------------------------------------------------------------- */
 /* 4b. Notification interne d'annulation (Théo)                               */
 /* -------------------------------------------------------------------------- */
-export function internalCancellationEmail(booking: Booking): EmailContent {
+export function internalCancellationEmail(
+  booking: Booking,
+  feedback?: CancelFeedback,
+): EmailContent {
+  const lines = feedback ? summarizeCancelFeedback(feedback) : [];
+
+  // Bloc « retour d'annulation » (free-text échappé : formulaire public).
+  const feedbackHtml = lines.length
+    ? `<div style="margin:4px 0 4px;padding:14px 16px;background:#f5f5f5;border-radius:12px;">` +
+      lines
+        .map(
+          (l) =>
+            `<p style="margin:0 0 6px;font-size:14px;line-height:1.5;color:${INK};">${escapeHtml(l)}</p>`,
+        )
+        .join("") +
+      `</div>`
+    : "";
+
   const html = layout(
     `<h1 style="margin:0 0 16px;font-size:20px;font-weight:700;color:${INK};">Annulation</h1>` +
       p(
         `${booking.lead_name} (${booking.lead_email}) a annulé son appel du <strong>${slotLine(booking)}</strong>.`,
-      ),
+      ) +
+      feedbackHtml,
   );
-  const text = `${booking.lead_name} (${booking.lead_email}) a annulé son appel du ${slotLine(booking)}.`;
+
+  const text =
+    `${booking.lead_name} (${booking.lead_email}) a annulé son appel du ${slotLine(booking)}.` +
+    (lines.length ? `\n\n${lines.join("\n")}` : "");
+
   return { subject: `Annulation — ${booking.lead_name}`, html, text };
 }
 

@@ -77,6 +77,35 @@ export interface AvailableDay {
   slots: Slot[];
 }
 
+/* -------------------------------------------------------------------------- */
+/* Annulation : questionnaire de rétention                                     */
+/* -------------------------------------------------------------------------- */
+
+/** Motif d'annulation (1re question du questionnaire d'annulation). */
+export type CancelReason =
+  | "not_available" // « Je ne suis plus disponible le [date] »
+  | "other_consultant" // « J'ai commencé avec un autre consultant »
+  | "better_tool" // « J'ai trouvé un meilleur outil que Notion »
+  | "no_time"; // « Je n'ai plus le temps »
+
+/** Outil concurrent cité (branche « meilleur outil »). */
+export type BetterTool = "asana" | "clickup" | "custom_ai" | "other";
+
+/** Délai de rappel souhaité (branche « plus le temps »). */
+export type CallbackDelay = "1m" | "3m" | "6m";
+
+/** Retour collecté pendant le flow d'annulation (transmis à la notif interne). */
+export interface CancelFeedback {
+  reason: CancelReason;
+  /** branche better_tool */
+  betterTool?: BetterTool;
+  betterToolOther?: string; // si betterTool === "other"
+  betterToolReason?: string; // « pourquoi mieux que Notion ? »
+  /** branche no_time */
+  wantsCallback?: boolean;
+  callbackDelay?: CallbackDelay; // si wantsCallback
+}
+
 /** Charge utile du formulaire de qualification. */
 export interface QualificationInput {
   name: string;

@@ -7,7 +7,7 @@
 import "server-only";
 import { getSupabaseAdmin } from "./supabase";
 import { generateManageToken } from "../lib/tokens";
-import type { Booking, QualificationInput } from "../types";
+import type { Booking, CancelFeedback, QualificationInput } from "../types";
 
 /** Statuts qui « occupent » un créneau pour le calcul de disponibilité. */
 const ACTIVE_STATUSES = ["confirmed", "pending_manual"] as const;
@@ -206,6 +206,33 @@ async function incrementedSequence(id: string): Promise<number> {
 /** Passe une réservation en `cancelled`. */
 export async function cancelBooking(id: string): Promise<Booking> {
   return patchBooking(id, { status: "cancelled" });
+}
+
+/**
+ * Enregistre le motif d'annulation (questionnaire de rétention) dans la table
+ * dédiée `cancellation_feedback`. Best-effort : l'appelant ne bloque pas
+ * l'annulation si l'écriture échoue.
+ */
+export async function insertCancellationFeedback(
+  booking: Booking,
+  fb: CancelFeedback,
+): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.from("cancellation_feedback").insert({
+    booking_id: booking.id,
+    lead_name: booking.lead_name,
+    lead_email: booking.lead_email,
+    start_utc: booking.start_utc,
+    reason: fb.reason,
+    better_tool: fb.betterTool ?? null,
+    better_tool_other: fb.betterToolOther?.trim() || null,
+    better_tool_reason: fb.betterToolReason?.trim() || null,
+    wants_callback: fb.wantsCallback ?? null,
+    callback_delay: fb.callbackDelay ?? null,
+  });
+  if (error) {
+    throw new Error(`Enregistrement motif annulation échoué: ${error.message}`);
+  }
 }
 
 /** Réservations à venir (confirmées + pending), pour l'admin. */

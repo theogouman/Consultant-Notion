@@ -36,6 +36,58 @@ function overlaps(a: Interval, b: Interval): boolean {
   return a.start < b.end && b.start < a.end;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Cache mémoire court des disponibilités                                     */
+/* -------------------------------------------------------------------------- */
+/**
+ * Le calcul des disponibilités interroge Google (freebusy) + Supabase à chaque
+ * appel, ce qui domine le temps d'affichage du calendrier. On mémorise le
+ * résultat par fuseau pendant quelques secondes : les réouvertures du modal et
+ * les changements de fuseau deviennent instantanés, et plusieurs visiteurs
+ * partagent le même calcul (les disponibilités sont globales, pas par-lead).
+ *
+ * La fenêtre est courte (le créneau n'est ferme qu'à la soumission, arbitré par
+ * l'index unique en base) ; toute mutation (résa/reprogrammation/annulation)
+ * vide ce cache via invalidateAvailabilityCache().
+ */
+const AVAIL_TTL_MS = 20_000;
+type AvailabilityResult = {
+  days: AvailableDay[];
+  leadTimezone: string;
+  hostTimezone: string;
+};
+const availabilityCache = new Map<
+  string,
+  { at: number; value: AvailabilityResult }
+>();
+
+/** Vide le cache de disponibilités (à appeler après toute mutation). */
+export function invalidateAvailabilityCache(): void {
+  availabilityCache.clear();
+}
+
+/**
+ * Garde-fou PUR (aucun appel réseau) : un créneau est-il dans la fenêtre
+ * réservable (pas dans le passé, respecte min_notice et max_advance) ?
+ * Utilisé à la soumission pour rejeter un créneau périmé sans relancer tout le
+ * calcul de disponibilité (l'anti-double-booking est assuré par l'index unique).
+ */
+export function isWithinBookableWindow(
+  startUtcIso: string,
+  settings: Settings,
+  now: DateTime = DateTime.utc(),
+): boolean {
+  const s = Date.parse(startUtcIso);
+  if (Number.isNaN(s)) return false;
+  const minMs = now.toMillis() + settings.min_notice_hours * 3600_000;
+  const maxMs = now
+    .setZone(settings.host_timezone)
+    .startOf("day")
+    .plus({ days: settings.max_advance_days + 1 })
+    .toMillis();
+  return s >= minMs && s < maxMs;
+}
+
 /**
  * Génère les créneaux candidats (UTC) sur la fenêtre réservable, en heure host.
  * La fenêtre va de maintenant (borne min_notice) à now + max_advance_days.
@@ -80,7 +132,14 @@ function generateCandidateSlots(settings: Settings, now: DateTime): Slot[] {
  */
 export async function computeAvailability(
   leadTimezoneInput: string,
-): Promise<{ days: AvailableDay[]; leadTimezone: string; hostTimezone: string }> {
+): Promise<AvailabilityResult> {
+  // Cache court : une réouverture / un changement de fuseau récent ne relance
+  // ni Google ni Supabase.
+  const cached = availabilityCache.get(leadTimezoneInput);
+  if (cached && Date.now() - cached.at < AVAIL_TTL_MS) {
+    return cached.value;
+  }
+
   const settings = await getSettings();
   const leadTimezone = safeLeadTimezone(leadTimezoneInput, settings.host_timezone);
 
@@ -170,25 +229,11 @@ export async function computeAvailability(
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  return { days, leadTimezone, hostTimezone: settings.host_timezone };
-}
-
-/**
- * Revalide qu'un créneau précis est toujours réservable (au submit).
- * Renvoie true si le créneau candidat figure dans les disponibilités calculées.
- */
-export async function isSlotStillAvailable(
-  startUtcIso: string,
-  leadTimezone: string,
-): Promise<boolean> {
-  const { days } = await computeAvailability(leadTimezone);
-  return days.some((d) => d.slots.some((s) => s.start_utc === startUtcIso));
-}
-
-/** Durée du créneau (fin) à partir d'un début, selon settings. */
-export async function slotEndFor(startUtcIso: string): Promise<string> {
-  const settings = await getSettings();
-  return DateTime.fromISO(startUtcIso, { zone: "utc" })
-    .plus({ minutes: settings.call_duration_min })
-    .toISO()!;
+  const result: AvailabilityResult = {
+    days,
+    leadTimezone,
+    hostTimezone: settings.host_timezone,
+  };
+  availabilityCache.set(leadTimezoneInput, { at: Date.now(), value: result });
+  return result;
 }

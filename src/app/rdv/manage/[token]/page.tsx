@@ -26,12 +26,12 @@ export default async function ManagePage({
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-4 py-10 sm:py-16">
-      <div className="mb-6 text-center">
+      <div className="mb-4 w-full max-w-xl">
         <Link
           href="/"
-          className="text-sm font-medium text-muted transition-colors hover:text-ink"
+          className="inline-flex items-center gap-2 rounded-sm bg-raised px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-line"
         >
-          ← consultant-notion.fr
+          <span aria-hidden>←</span> consultant-notion.fr
         </Link>
       </div>
 

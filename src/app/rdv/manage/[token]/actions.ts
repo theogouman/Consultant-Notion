@@ -10,6 +10,7 @@ import { computeAvailability } from "@/modules/booking/server/availability";
 import { getBookingByToken } from "@/modules/booking/server/bookings";
 import { rescheduleExisting, cancelExisting } from "@/modules/booking/server/flow";
 import type { AvailabilityResult } from "@/app/rdv/actions";
+import type { CancelFeedback } from "@/modules/booking/types";
 
 /** Disponibilités pour la reprogrammation (fuseau du lead). */
 export async function getManageAvailabilityAction(
@@ -55,13 +56,16 @@ export async function rescheduleAction(
   }
 }
 
-/** Annule la réservation liée au jeton. */
-export async function cancelAction(token: string): Promise<ManageResult> {
+/** Annule la réservation liée au jeton (avec retour d'annulation facultatif). */
+export async function cancelAction(
+  token: string,
+  feedback?: CancelFeedback,
+): Promise<ManageResult> {
   const booking = await getBookingByToken(token);
   if (!booking) return { ok: false, code: "not_found", error: "Réservation introuvable." };
 
   try {
-    await cancelExisting(booking.id);
+    await cancelExisting(booking.id, feedback);
     return { ok: true, kind: "cancelled" };
   } catch (err) {
     console.error("[manage] cancelAction:", err);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import BubbleOption from "./BubbleOption";
 import type { Situation } from "../types";
 
 /**
@@ -260,24 +261,17 @@ export default function QualificationForm({
 
   return (
     <div>
-      {/* Créneau sélectionné : cliquer revient au calendrier pour le changer. */}
-      <button
-        type="button"
-        onClick={onModifySlot}
-        className="mb-5 inline-flex items-center gap-2.5 rounded-sm bg-raised px-3 py-2 text-left transition-colors hover:bg-line"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/images/Annexes/clock.arrow.trianglehead.counterclockwise.rotate.90.svg"
-          alt=""
-          aria-hidden
-          className="h-5 w-auto flex-none"
-        />
-        <span className="flex flex-col leading-tight">
-          <span className="text-sm font-medium text-ink">Modifier mon créneau</span>
-          <span className="text-xs text-muted">{slotLabel}</span>
-        </span>
-      </button>
+      {/* Retour à la question précédente (au-dessus de la question). */}
+      {step > 0 && (
+        <button
+          type="button"
+          onClick={goBack}
+          disabled={submitting}
+          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <span aria-hidden>←</span> Retour
+        </button>
+      )}
 
       <div className="min-h-[190px]">
         <div ref={stageRef}>
@@ -286,24 +280,15 @@ export default function QualificationForm({
           <div className={`t-input-wrap ${error ? "is-error" : ""}`}>
             {current.type === "bubbles" ? (
               <div ref={fieldRef as React.RefObject<HTMLDivElement>} className={`t-input grid gap-3 sm:grid-cols-2 ${error ? "is-error" : ""}`}>
-                {current.options!.map((opt) => {
-                  const selected = values.situation === opt.value;
-                  return (
-                    <button
-                      type="button"
-                      key={opt.value}
-                      onClick={() => selectBubble(opt.value)}
-                      className={`flex items-center gap-3 rounded-sm border px-5 py-4 text-left text-[1.0625rem] transition-all duration-[200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                        selected ? "border-accent bg-accent/5 text-ink" : "border-line bg-raised text-ink hover:border-accent/50"
-                      }`}
-                    >
-                      <span className={`flex h-5 w-5 flex-none items-center justify-center rounded-full border ${selected ? "border-accent" : "border-line"}`}>
-                        {selected && <span className="h-2.5 w-2.5 rounded-full bg-accent" />}
-                      </span>
-                      {opt.label}
-                    </button>
-                  );
-                })}
+                {current.options!.map((opt) => (
+                  <BubbleOption
+                    key={opt.value}
+                    selected={values.situation === opt.value}
+                    onClick={() => selectBubble(opt.value)}
+                  >
+                    {opt.label}
+                  </BubbleOption>
+                ))}
               </div>
             ) : current.type === "textarea" ? (
               <AutoGrowTextarea
@@ -386,25 +371,33 @@ export default function QualificationForm({
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-4">
-        {step > 0 ? (
-          <button
-            type="button"
-            onClick={goBack}
-            disabled={submitting}
-            className="text-sm font-medium text-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            ← Retour
-          </button>
-        ) : (
-          <span />
-        )}
+      {/* Navigation : à gauche le créneau (le modifier ramène au calendrier), à
+          droite l'action primaire. Les deux boutons partagent la même ligne et,
+          via items-stretch, la même hauteur que « Suivant ». */}
+      <div className="mt-4 flex items-stretch justify-between gap-3 border-t border-line pt-4">
+        <button
+          type="button"
+          onClick={onModifySlot}
+          disabled={submitting}
+          className="inline-flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-line bg-card px-4 py-2.5 text-left transition-colors hover:border-accent/50 hover:bg-raised disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/Annexes/clock.arrow.trianglehead.counterclockwise.rotate.90.svg"
+            alt=""
+            aria-hidden
+            className="h-5 w-auto flex-none"
+          />
+          <span className="flex min-w-0 flex-col leading-tight">
+            <span className="text-sm font-medium text-ink">Modifier mon créneau</span>
+            <span className="truncate text-xs text-muted">{slotLabel}</span>
+          </span>
+        </button>
         <button
           type="button"
           onClick={goNext}
           disabled={submitting}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-medium text-white shadow-[0_8px_24px_-8px_rgba(224,98,90,0.6)] transition-all duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#d1504a] disabled:cursor-not-allowed disabled:opacity-70"
+          className="inline-flex flex-none items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-medium text-white shadow-[0_8px_24px_-8px_rgba(224,98,90,0.6)] transition-all duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#d1504a] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {submitting ? "Réservation…" : isLast ? "Réserver mon appel" : "Suivant"}
           {!submitting && <span aria-hidden>→</span>}

@@ -2,15 +2,21 @@
 
 import { useCallback, useEffect, useState } from "react";
 import SlotPicker from "./SlotPicker";
-import { formatSlotLong, timezoneAbbrev } from "../lib/timezone";
+import CancelFlow from "./CancelFlow";
+import { formatSlotBanner, timezoneParts } from "../lib/timezone";
 import {
   getManageAvailabilityAction,
   rescheduleAction,
   cancelAction,
 } from "@/app/rdv/manage/[token]/actions";
-import type { AvailableDay, BookingStatus, Slot } from "../types";
+import type { AvailableDay, BookingStatus, CancelFeedback, Slot } from "../types";
 
-type View = "overview" | "reschedule" | "confirm-cancel" | "cancelled" | "rescheduled";
+type View =
+  | "overview"
+  | "cancel-flow"
+  | "reschedule"
+  | "cancelled"
+  | "rescheduled";
 
 export interface ManageBookingProps {
   token: string;
@@ -34,9 +40,22 @@ export default function ManageBooking(props: ManageBookingProps) {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Contexte de reprogrammation : « cancel » = arrivé depuis le flow d'annulation
+  // (titre différent + porte de sortie « Non, je souhaite annuler »).
+  const [rescheduleContext, setRescheduleContext] = useState<"normal" | "cancel">(
+    "normal",
+  );
+  // Retour collecté par le questionnaire d'annulation (envoyé à Théo + base).
+  const [cancelFeedback, setCancelFeedback] = useState<CancelFeedback | null>(null);
 
-  const when = (iso: string) =>
-    capitalize(formatSlotLong(iso, tz)) + ` (${timezoneAbbrev(iso, tz)})`;
+  // Encadré gris arrondi : « Jeudi 13 août, à 17:00 <drapeau> ».
+  // Même taille / même poids que la phrase qui l'entoure : la puce n'est
+  // distinguée que par son fond gris (cf. docs/ui-typography.md §2).
+  const dateChip = (iso: string) => (
+    <span className="inline-block rounded-sm bg-raised px-2.5 py-1 text-[0.95rem] text-ink">
+      {formatSlotBanner(iso, tz)} {timezoneParts(tz).flag}
+    </span>
+  );
 
   const loadAvailability = useCallback(
     async (zone: string) => {
@@ -74,19 +93,32 @@ export default function ManageBooking(props: ManageBookingProps) {
     }
   }
 
-  async function onConfirmCancel() {
+  // Annulation effective : appelée par le CTA terminal du questionnaire (ou par
+  // « Non, je souhaite annuler » depuis le calendrier). Renvoie directement vers
+  // la page définitive de confirmation — aucun écran intermédiaire.
+  async function performCancel(fb: CancelFeedback) {
     setBusy(true);
     setError(null);
-    const res = await cancelAction(props.token);
+    setCancelFeedback(fb);
+    const res = await cancelAction(props.token, fb);
     setBusy(false);
     if (res.ok) setView("cancelled");
     else setError(res.error);
   }
 
+  // Depuis le questionnaire : « plus disponible » -> calendrier (contexte cancel).
+  function onRescheduleFromCancel(fb: CancelFeedback) {
+    setCancelFeedback(fb);
+    setRescheduleContext("cancel");
+    setError(null);
+    setLoading(true);
+    setView("reschedule");
+  }
+
   if (view === "cancelled") {
     return (
       <Centered title="Rendez-vous annulé.">
-        <p className="text-sm text-muted">
+        <p className="nc-balance text-sm text-muted">
           Votre appel a bien été annulé. Vous pouvez reprendre rendez-vous quand
           vous le souhaitez.
         </p>
@@ -102,29 +134,48 @@ export default function ManageBooking(props: ManageBookingProps) {
 
   if (view === "rescheduled") {
     return (
-      <Centered title="C'est reprogrammé.">
-        <p className="mb-1 text-[0.95rem] text-ink">
-          <strong>{when(currentStart)}</strong>
+      <Centered title="C'est ok ! L'invitation a été mise à jour">
+        <p className="mb-3 text-[0.95rem] text-ink">
+          Notre appel aura lieu le {dateChip(currentStart)}
         </p>
-        <p className="text-sm text-muted">
-          Un e-mail de confirmation avec le nouveau créneau vient de vous être
-          envoyé.
+        <p className="nc-balance text-sm text-muted">
+          Merci d'avoir pris le temps de replanifier cet appel ! Une confirmation
+          a été envoyé par mail.
         </p>
       </Centered>
     );
   }
 
+  if (view === "cancel-flow") {
+    return (
+      <CancelFlow
+        startUtc={currentStart}
+        leadTimezone={tz}
+        busy={busy}
+        error={error}
+        onExit={() => setView("overview")}
+        onReschedule={onRescheduleFromCancel}
+        onCancel={performCancel}
+      />
+    );
+  }
+
   if (view === "reschedule") {
+    const cancelCtx = rescheduleContext === "cancel";
     return (
       <div>
         <button
           type="button"
-          onClick={() => setView("overview")}
+          onClick={() => setView(cancelCtx ? "cancel-flow" : "overview")}
           className="mb-4 text-sm font-medium text-muted transition-colors hover:text-ink"
         >
           ← Retour
         </button>
-        <h2 className="nc-title mb-1 text-xl">Choisissez un nouveau créneau</h2>
+        <h2 className="nc-title mb-1 text-lg sm:text-xl">
+          {cancelCtx
+            ? "On a d'autres créneaux qui pourraient te convenir, souhaites-tu replanifier ?"
+            : "Choisissez un nouveau créneau"}
+        </h2>
         <p className="mb-5 text-sm text-muted">Horaires dans votre fuseau.</p>
         {error && (
           <div className="mb-4 rounded-sm border border-accent/30 bg-accent/5 px-4 py-3 text-sm text-ink">
@@ -140,72 +191,67 @@ export default function ManageBooking(props: ManageBookingProps) {
             onTimezoneChange={setTz}
           />
         </div>
-      </div>
-    );
-  }
 
-  if (view === "confirm-cancel") {
-    return (
-      <Centered title="Annuler ce rendez-vous ?">
-        <p className="mb-1 text-[0.95rem] text-ink">{when(currentStart)}</p>
-        <p className="mb-5 text-sm text-muted">Cette action est définitive.</p>
-        {error && <p className="mb-4 text-sm text-accent">{error}</p>}
-        <div className="flex items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => setView("overview")}
-            disabled={busy}
-            className="rounded-xl border border-line bg-card px-5 py-3 text-sm font-medium text-ink transition-colors hover:border-accent disabled:opacity-60"
-          >
-            Non, garder
-          </button>
-          <button
-            type="button"
-            onClick={onConfirmCancel}
-            disabled={busy}
-            className="rounded-xl bg-accent px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#d1504a] disabled:opacity-60"
-          >
-            {busy ? "Annulation…" : "Oui, annuler"}
-          </button>
-        </div>
-      </Centered>
+        {cancelCtx && (
+          <div className="mt-5 border-t border-line pt-4 text-center">
+            {/* Annulation directe (pas d'écran intermédiaire). */}
+            <button
+              type="button"
+              onClick={() => performCancel(cancelFeedback ?? { reason: "not_available" })}
+              disabled={busy}
+              className="text-sm font-medium text-muted transition-colors hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {busy ? (
+                "Annulation…"
+              ) : (
+                <>
+                  Non, je souhaite annuler <span aria-hidden>→</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
     );
   }
 
   // overview
   return (
     <div>
-      <p className="nc-eyebrow mb-2">Votre rendez-vous</p>
-      <h2 className="nc-title mb-1 text-xl sm:text-2xl">
-        Bonjour {props.leadName.split(" ")[0]}.
-      </h2>
-      <p className="mb-5 text-[0.95rem] text-ink">
-        Appel de qualification prévu le <strong>{when(currentStart)}</strong>.
+      <h2 className="nc-title mb-2 text-xl sm:text-2xl">Que souhaites-tu faire ?</h2>
+      <p className="mb-6 text-[0.95rem] text-ink">
+        Notre appel est planifié pour le {dateChip(currentStart)}
       </p>
 
-      {props.meetUrl && (
-        <a
-          href={props.meetUrl}
-          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-accent hover:underline"
-        >
-          Lien de la visio →
-        </a>
-      )}
-
-      <div className="flex flex-col gap-3 border-t border-line pt-5 sm:flex-row">
+      <div className="flex flex-col gap-3 border-t border-line pt-5">
         <button
           type="button"
-          onClick={() => setView("reschedule")}
-          className="flex-1 rounded-xl bg-accent px-5 py-3 text-sm font-medium text-white shadow-[0_8px_24px_-8px_rgba(224,98,90,0.6)] transition-all hover:bg-[#d1504a]"
+          onClick={() => {
+            setRescheduleContext("normal");
+            setLoading(true); // évite le flash « aucun créneau » avant le skeleton
+            setView("reschedule");
+          }}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#d1504a]"
         >
-          Reprogrammer
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {/* brightness-0 invert : icône rendue en blanc sur le fond corail. */}
+          <img
+            src="/images/Annexes/clock.arrow.trianglehead.counterclockwise.rotate.90.svg"
+            alt=""
+            aria-hidden
+            className="h-4 w-auto brightness-0 invert"
+          />
+          Je veux replanifier
         </button>
         <button
           type="button"
-          onClick={() => setView("confirm-cancel")}
-          className="flex-1 rounded-xl border border-line bg-card px-5 py-3 text-sm font-medium text-ink transition-colors hover:border-accent hover:text-accent"
+          onClick={() => {
+            setError(null);
+            setView("cancel-flow");
+          }}
+          className="rounded-xl border border-line bg-card px-5 py-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:text-accent"
         >
-          Annuler
+          Je veux annuler mon rendez-vous
         </button>
       </div>
     </div>
@@ -215,12 +261,9 @@ export default function ManageBooking(props: ManageBookingProps) {
 function Centered({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="py-4 text-center">
-      <h2 className="nc-title mb-3 text-2xl">{title}</h2>
+      <h2 className="nc-title nc-balance mb-3 text-2xl">{title}</h2>
       {children}
     </div>
   );
 }
 
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}

@@ -144,6 +144,29 @@ body {
   color: var(--color-accent);
 }
 
+/* --- Équilibrage typographique (règle projet) -----------------------------
+   Tout titre ou texte court d'affichage doit avoir des lignes de LONGUEUR
+   HOMOGÈNE (effet compact) plutôt qu'une dernière ligne « orpheline »
+   (p. ex. 15 mots sur la 1re ligne + 1 mot sur la 2de).
+   `.nc-balance` combine `text-wrap: balance` (équilibrage des lignes) et une
+   mesure (max-width) qui force au moins deux lignes. La mesure par défaut est
+   de 34ch ; on peut l'ajuster au cas par cas via la variable `--nc-measure`
+   (ex. style={{ "--nc-measure": "40rem" }}).
+   Règle et exemples : docs/ui-typography.md                                  */
+.nc-balance {
+  text-wrap: balance;
+  margin-inline: auto;
+  max-width: var(--nc-measure, 34ch);
+}
+/* Demi-mesure : pour les titres / phrases courtes d'affichage. Mesure plus
+   large => on garde 1 à 2 lignes au lieu de casser 5 mots sur 3 lignes.
+   À préférer dès qu'une phrase courte tiendrait sur deux lignes lisibles. */
+.nc-balance-wide {
+  text-wrap: balance;
+  margin-inline: auto;
+  max-width: var(--nc-measure, 46ch);
+}
+
 /* --- Ombres utilitaires --------------------------------------------------- */
 .nc-shadow-2 {
   box-shadow: var(--nc-shadow-2);
