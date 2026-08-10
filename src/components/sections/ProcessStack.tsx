@@ -17,13 +17,6 @@ import { howItWorks } from "@/lib/content";
  * Repli prefers-reduced-motion : flux normal (cartes empilées statiquement).
  */
 
-const STEP_PILLS = [
-  ["Gratuit", "20 min"],
-  ["Analyse", "Diagnostic"],
-  ["Sur-mesure", "Clé en main"],
-  ["Équipe", "Autonomie"],
-];
-
 export default function ProcessStack() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
@@ -164,7 +157,6 @@ export default function ProcessStack() {
       <div ref={scrollRef} className="nc-proc-scroll">
         <div ref={stickyRef} className="nc-proc-sticky">
           <Reveal className="nc-proc-header">
-            <p className="nc-eyebrow mb-3">{howItWorks.eyebrow}</p>
             <h2 className="nc-title text-3xl sm:text-4xl">{howItWorks.title}</h2>
             <p className="mt-3 text-lg text-muted">{howItWorks.subtitle}</p>
           </Reveal>
@@ -174,13 +166,6 @@ export default function ProcessStack() {
               <article key={i} className="nc-proc-card" data-step={i}>
                 <div className="nc-proc-grid">
                   <div className="nc-proc-content">
-                    <div className="nc-proc-pills">
-                      {STEP_PILLS[i]?.map((p) => (
-                        <span key={p} className="nc-proc-pill">
-                          {p}
-                        </span>
-                      ))}
-                    </div>
                     <div className="nc-proc-quote">
                       <span className="nc-proc-num" aria-hidden>
                         {i + 1}
@@ -211,8 +196,8 @@ function StepVisual({ step }: { step: number }) {
       <div className="nc-anim-root">
         <div className="nc-anim-imessage">
           <div className="nc-anim-bubble-in">
-            C&apos;est le chaos dans notre organisation. On passe notre temps à
-            jongler entre les outils pour retrouver les informations…
+            C&apos;est le chaos, on passe notre temps à chercher les infos
+            plutôt que travailler…
           </div>
           <div className="nc-anim-out-wrap">
             <div className="nc-anim-bubble-out">
@@ -244,7 +229,7 @@ function StepVisual({ step }: { step: number }) {
               </div>
             </div>
             <div className="nc-anim-meet-bar">
-              <span className="nc-anim-meet-bar-label">Notion : Vous × Théo</span>
+              <span className="nc-anim-meet-bar-label">Notion : Toi × Théo</span>
               <div className="nc-anim-meet-btn nc-anim-meet-btn-g">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />

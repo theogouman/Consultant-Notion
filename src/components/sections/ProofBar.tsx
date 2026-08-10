@@ -36,9 +36,9 @@ export default function ProofBar() {
                     <img
                       src={logo.src}
                       alt={duplicate ? "" : logo.name}
-                      width={80}
-                      height={80}
-                      className="h-16 w-16 object-contain sm:h-20 sm:w-20"
+                      width={112}
+                      height={112}
+                      className="h-20 w-20 object-contain sm:h-28 sm:w-28"
                     />
                   </div>
                 );

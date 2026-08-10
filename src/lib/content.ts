@@ -13,7 +13,6 @@ export const hero = {
   subtitle:
     "On supprime le chaos organisationnel des entreprises en centralisant & automatisant leurs processus dans une solution sur-mesure pour maximiser la productivité",
   cta: "Faire le point sur mon organisation",
-  microProof: "+100 entreprises accompagnées · certifications Notion · depuis 2022",
 };
 
 export const howItWorks = {

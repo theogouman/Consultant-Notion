@@ -23,7 +23,6 @@ export default function Hero() {
               {hero.cta}
               <span aria-hidden>→</span>
             </CtaButton>
-            <p className="text-sm text-muted">{hero.microProof}</p>
           </div>
         </Reveal>
       </div>

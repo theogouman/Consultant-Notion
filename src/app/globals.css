@@ -577,30 +577,17 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  text-align: center;
   gap: 1rem;
   padding: 1.75rem 1.75rem 1.25rem;
   min-width: 0;
 }
-.nc-proc-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.nc-proc-pill {
-  display: inline-flex;
-  align-items: center;
-  border-radius: var(--radius-full);
-  background: var(--color-raised);
-  color: var(--color-muted);
-  padding: 5px 12px;
-  font-size: 12px;
-  font-weight: 500;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.03);
-}
 .nc-proc-quote {
   display: flex;
-  gap: 1rem;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.85rem;
+  align-items: center;
 }
 .nc-proc-num {
   flex: none;
@@ -693,7 +680,8 @@ body {
 .nc-anim-bubble-in {
   align-self: flex-start;
   max-width: 88%;
-  background: #f1f1f3;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
   color: #1a1a1a;
   border-radius: 18px 18px 18px 5px;
   padding: 11px 15px;
