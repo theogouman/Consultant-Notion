@@ -104,10 +104,17 @@ export default function ResourceMorphOverlay() {
     const tx = cardRect.left - panelRect.left;
     const ty = cardRect.top - panelRect.top;
 
+    // Rayon contre-mis-à-l'échelle : le border-radius s'applique AVANT le
+    // transform, donc un rayon r sur un panneau scalé (sx, sy) se voit r*sx /
+    // r*sy → coins écrasés vers l'angle droit. On divise par le scale pour que
+    // le rayon VISUEL reste circulaire et vaille CARD_RADIUS une fois replié.
+    const fullRadius = `${PANEL_RADIUS}px / ${PANEL_RADIUS}px`;
+    const foldedRadius = `${(CARD_RADIUS / sx).toFixed(2)}px / ${(CARD_RADIUS / sy).toFixed(2)}px`;
+
     // --- 2) POSER L'ÉTAT REPLIÉ (avant paint) ---
     panel.style.transformOrigin = "top left";
     panel.style.transform = `translate(${tx}px, ${ty}px) scale(${sx}, ${sy})`;
-    panel.style.borderRadius = `${CARD_RADIUS}px`;
+    panel.style.borderRadius = foldedRadius;
     if (panelImg) panelImg.style.opacity = "0"; // masque la vraie couverture
     if (title) title.style.opacity = "0";
     if (body) body.style.opacity = "0";
@@ -159,9 +166,9 @@ export default function ResourceMorphOverlay() {
           [
             {
               transform: `translate(${tx}px, ${ty}px) scale(${sx}, ${sy})`,
-              borderRadius: `${CARD_RADIUS}px`,
+              borderRadius: foldedRadius,
             },
-            { transform: "translate(0,0) scale(1,1)", borderRadius: `${PANEL_RADIUS}px` },
+            { transform: "translate(0,0) scale(1,1)", borderRadius: fullRadius },
           ],
           SPRING,
         );
@@ -250,6 +257,11 @@ export default function ResourceMorphOverlay() {
     const tx = cardRect.left - panelRect.left;
     const ty = cardRect.top - panelRect.top;
 
+    // Rayon contre-mis-à-l'échelle (cf. ouverture) : garde le coin circulaire à
+    // CARD_RADIUS une fois replié, au lieu de l'écraser vers l'angle droit.
+    const fullRadius = `${PANEL_RADIUS}px / ${PANEL_RADIUS}px`;
+    const foldedRadius = `${(CARD_RADIUS / sx).toFixed(2)}px / ${(CARD_RADIUS / sy).toFixed(2)}px`;
+
     setClosing(true);
 
     // Image volante : part de la couverture du panneau vers la carte.
@@ -327,10 +339,10 @@ export default function ResourceMorphOverlay() {
 
     const pAnim = panel.animate(
       [
-        { transform: "translate(0,0) scale(1,1)", borderRadius: `${PANEL_RADIUS}px` },
+        { transform: "translate(0,0) scale(1,1)", borderRadius: fullRadius },
         {
           transform: `translate(${tx}px, ${ty}px) scale(${sx}, ${sy})`,
-          borderRadius: `${CARD_RADIUS}px`,
+          borderRadius: foldedRadius,
         },
       ],
       SPRING,

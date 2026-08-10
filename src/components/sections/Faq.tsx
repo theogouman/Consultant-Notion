@@ -16,7 +16,6 @@ export default function Faq() {
   return (
     <Section id="faq" width="narrow">
       <Reveal className="mb-10 text-center">
-        <p className="nc-eyebrow mb-3">{faq.eyebrow}</p>
         <h2 className="nc-title text-3xl sm:text-4xl">{faq.title}</h2>
       </Reveal>
       <div className="space-y-3">

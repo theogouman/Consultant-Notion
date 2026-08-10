@@ -67,19 +67,18 @@ export default function About() {
 
             {about.certifications.length > 0 && (
               <Reveal className="mt-8">
-                {/* Badges sur une seule ligne, agrandis et resserrés. Mobile :
-                    grille de 5 colonnes égales qui remplissent la largeur (aussi
-                    grands que possible). Desktop : rangée à taille fixe, groupée
-                    à gauche. Tooltip au survol (transitions.dev · tooltip). */}
-                <div className="grid grid-cols-5 items-center gap-2 sm:flex sm:flex-nowrap sm:gap-2.5">
+                {/* Badges sur une seule ligne. Mobile : taille fixe réduite
+                    (discrète), groupés à gauche. Desktop : rangée à taille fixe
+                    68px. Tooltip au survol (transitions.dev · tooltip). */}
+                <div className="flex flex-nowrap items-center gap-2.5 sm:gap-2.5">
                   {about.certifications.map((cert) => (
-                    <span key={cert.src} className="t-tt-wrap sm:flex-none">
+                    <span key={cert.src} className="t-tt-wrap flex-none">
                       <Image
                         src={cert.src}
                         alt={cert.label}
                         width={72}
                         height={72}
-                        className="h-auto w-full object-contain sm:h-[68px] sm:w-[68px]"
+                        className="h-10 w-10 object-contain sm:h-[68px] sm:w-[68px]"
                       />
                       <span className="t-tt" role="tooltip">
                         {cert.label}

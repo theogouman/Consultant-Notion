@@ -136,6 +136,26 @@ export const finalCta = {
 
 export const footer = {
   name: "Théo Gouman",
-  tagline: "Consultant Notion pour TPE et PME.",
+  avatar: "/images/Annexes/theo-gouman-avatar.png",
+  tagline: "Consultant Notion pour les TPE et PME depuis 2022",
+  operatedBy: "Opéré par l'entreprise EURL Gouman Operates",
+  siren: "SIREN : 100 120 609",
   domain: "consultant-notion.fr",
+  socials: [
+    {
+      label: "LinkedIn",
+      href: "https://www.linkedin.com/in/theogouman/",
+      icon: "/images/Annexes/linkedin-dark.svg",
+    },
+    {
+      label: "Instagram",
+      href: "https://www.instagram.com/theo.gouman/",
+      icon: "/images/Annexes/instagram-dark.svg",
+    },
+    {
+      label: "YouTube",
+      href: "https://www.youtube.com/@ThéoGouman?sub_confirmation=1",
+      icon: "/images/Annexes/youtube-icon.svg",
+    },
+  ],
 };

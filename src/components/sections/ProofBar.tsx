@@ -9,9 +9,10 @@ import { getClientLogos } from "@/lib/logos";
  * l'identique, fondus sur les bords, pause au survol (animation-play-state)
  * et repli prefers-reduced-motion (mouvement stoppé). Cf. globals.css.
  *
- * Les logos sont des carrés 1080×1080 : on les rend dans une boîte carrée de
- * taille fixe (dimensions réservées + chargement immédiat) pour un
- * espacement rigoureusement uniforme, y compris à la jonction de boucle.
+ * Les logos ont été normalisés à un canvas ~2:1 (~440×225) : on les rend dans
+ * une boîte rectangulaire ~2:1 de taille fixe (dimensions réservées +
+ * chargement immédiat) pour un espacement rigoureusement uniforme, y compris à
+ * la jonction de boucle. La largeur fixe (w-32/w-40) garantit l'uniformité.
  */
 export default function ProofBar() {
   const logos = getClientLogos();
@@ -36,9 +37,9 @@ export default function ProofBar() {
                     <img
                       src={logo.src}
                       alt={duplicate ? "" : logo.name}
-                      width={112}
+                      width={220}
                       height={112}
-                      className="h-20 w-20 object-contain sm:h-28 sm:w-28"
+                      className="h-16 w-32 object-contain sm:h-20 sm:w-40"
                     />
                   </div>
                 );
