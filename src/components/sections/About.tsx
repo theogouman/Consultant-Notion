@@ -10,38 +10,51 @@ const PHOTO = "/images/Annexes/theo-gouman-portrait.png";
  * Bloc 9 — Enchanté (Théo Gouman).
  *
  * L'encadré est élargi pour accueillir la photo :
- *  - desktop : deux colonnes, la photo (découpe sur fond transparent) est
- *    collée en bas à droite de l'encadré blanc ;
- *  - mobile : empilement, la photo passe en haut et se fond (fondu progressif)
- *    vers le titre en dessous via un masque dégradé.
+ *  - desktop : deux colonnes, la photo (découpe sur fond transparent) est à
+ *    GAUCHE, collée en bas de l'encadré, avec du padding pour ne pas toucher
+ *    les bords ; le contenu est à droite ;
+ *  - mobile : empilement, la photo passe en haut (cadrage plus carré, rogné en
+ *    bas) et se fond vers le titre via un masque dégradé net en bas de l'image.
  */
 export default function About() {
   return (
     <Section id="qui-je-suis" width="default">
       <div className="relative overflow-hidden rounded-md border border-line bg-card nc-shadow-2">
-        {/* Photo — mobile : empilée en haut, fondu progressif vers le contenu. */}
-        <div className="px-6 pt-8 sm:hidden">
-          <Image
-            src={PHOTO}
-            alt="Théo Gouman, consultant Notion"
-            width={640}
-            height={1049}
-            className="nc-photo-fade mx-auto block h-80 w-auto object-contain object-bottom"
-          />
+        {/* Photo — mobile : empilée en haut, cadrage carré (rogné en bas) +
+            fondu net sur le bord bas. */}
+        <div className="px-5 pt-6 sm:hidden">
+          <div className="nc-photo-fade relative mx-auto aspect-[4/5] w-full overflow-hidden">
+            <Image
+              src={PHOTO}
+              alt="Théo Gouman, consultant Notion"
+              fill
+              sizes="100vw"
+              className="object-cover object-top"
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_300px]">
-          {/* Colonne texte */}
-          <div className="px-8 pb-10 pt-1 sm:p-12 sm:pr-6">
+        <div className="grid grid-cols-1 sm:grid-cols-[340px_minmax(0,1fr)]">
+          {/* Colonne photo — desktop : à gauche, collée en bas, padding latéral. */}
+          <div className="relative hidden self-stretch sm:block">
+            <Image
+              src={PHOTO}
+              alt=""
+              aria-hidden
+              fill
+              sizes="340px"
+              className="object-contain object-bottom pl-10 pr-2"
+            />
+          </div>
+
+          {/* Colonne texte — desktop : à droite. */}
+          <div className="px-6 pb-10 pt-1 sm:py-12 sm:pl-6 sm:pr-12">
             <Reveal>
               <HandwriteText
                 text={about.eyebrow}
                 className="mb-2 text-xl sm:text-2xl"
               />
               <h2 className="nc-title text-3xl sm:text-4xl">{about.name}</h2>
-              <p className="mt-3 text-lg font-medium text-accent">
-                {about.headline}
-              </p>
             </Reveal>
             <div className="mt-6 space-y-4">
               {about.bio.map((p, i) => (
@@ -53,19 +66,19 @@ export default function About() {
 
             {about.certifications.length > 0 && (
               <Reveal className="mt-8">
-                {/* Badges sur une seule ligne : compacts et resserrés (mobile :
-                    répartis edge-to-edge ; desktop : groupés à gauche). Chaque
-                    badge affiche l'intitulé de la certification en tooltip au
-                    survol (technique transitions.dev · tooltip, pur CSS). */}
-                <div className="flex flex-nowrap items-center justify-between gap-2 sm:justify-start sm:gap-4">
+                {/* Badges sur une seule ligne, agrandis et resserrés. Mobile :
+                    grille de 5 colonnes égales qui remplissent la largeur (aussi
+                    grands que possible). Desktop : rangée à taille fixe, groupée
+                    à gauche. Tooltip au survol (transitions.dev · tooltip). */}
+                <div className="grid grid-cols-5 items-center gap-2 sm:flex sm:flex-nowrap sm:gap-2.5">
                   {about.certifications.map((cert) => (
-                    <span key={cert.src} className="t-tt-wrap">
+                    <span key={cert.src} className="t-tt-wrap sm:flex-none">
                       <Image
                         src={cert.src}
                         alt={cert.label}
-                        width={56}
-                        height={56}
-                        className="h-11 w-11 object-contain sm:h-14 sm:w-14"
+                        width={72}
+                        height={72}
+                        className="h-auto w-full object-contain sm:h-[68px] sm:w-[68px]"
                       />
                       <span className="t-tt" role="tooltip">
                         {cert.label}
@@ -93,18 +106,6 @@ export default function About() {
                 </div>
               </Reveal>
             )}
-          </div>
-
-          {/* Colonne photo — desktop : collée au bas à droite de l'encadré. */}
-          <div className="relative hidden self-stretch sm:block">
-            <Image
-              src={PHOTO}
-              alt=""
-              aria-hidden
-              fill
-              sizes="300px"
-              className="object-contain object-bottom"
-            />
           </div>
         </div>
       </div>

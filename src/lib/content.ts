@@ -73,7 +73,6 @@ export const caseStudies = {
 export const about = {
   eyebrow: "Enchanté 👋",
   name: "Théo Gouman",
-  headline: "Consultant Notion. +100 entreprises accompagnées depuis 2022.",
   // [À AFFINER] — bio 3–4 phrases, voix de Théo, angle « faire moins pour mieux faire ».
   bio: [
     "Je suis Théo Gouman, consultant Notion indépendant. Depuis 2022, j’ai accompagné plus de 100 entreprises à structurer leur organisation autour d’un principe simple : faire moins, pour faire mieux.",
