@@ -8,13 +8,8 @@ export default function Hero() {
     <section id="top" className="relative mx-auto w-full max-w-5xl px-5 pb-16 pt-20 sm:px-8 sm:pb-24 sm:pt-28">
       <div className="mx-auto max-w-3xl text-center">
         <Reveal>
-          <p className="nc-eyebrow mb-5">Consultant Notion · TPE &amp; PME</p>
-        </Reveal>
-        <Reveal delay={60}>
-          <h1 className="nc-title text-4xl sm:text-5xl md:text-6xl">
-            {hero.title[0]}
-            <br />
-            <span className="text-accent">{hero.title[1]}</span>
+          <h1 className="nc-title nc-balance-wide text-4xl sm:text-5xl md:text-6xl">
+            {hero.title}
           </h1>
         </Reveal>
         <Reveal delay={120}>

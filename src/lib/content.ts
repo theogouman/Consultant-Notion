@@ -9,9 +9,9 @@ export const CTA_HREF = "/rdv";
 export const CTA_LABEL = "Faire le point sur mon organisation";
 
 export const hero = {
-  title: ["Un Notion qui fait moins.", "Pour faire mieux."],
+  title: "Gagnez en efficacité avec un Notion",
   subtitle:
-    "Consultant Notion pour TPE et PME. Que vous partiez d’outils éparpillés ou d’un Notion devenu illisible, je construis à partir de vos enjeux — pas d’un template — une organisation claire, livrée clé en main.",
+    "On supprime le chaos organisationnel des entreprises en centralisant & automatisant leurs processus dans une solution sur-mesure pour maximiser la productivité",
   cta: "Faire le point sur mon organisation",
   microProof: "+100 entreprises accompagnées · certifications Notion · depuis 2022",
 };
@@ -40,10 +40,9 @@ export const howItWorks = {
 };
 
 export const caseStudies = {
-  eyebrow: "Preuve",
-  title: "Des organisations construites sur mesure.",
+  title: "Ils avaient un problème d’organisation avant de",
   subtitle:
-    "Chaque accompagnement part des enjeux de l’entreprise. Filtrez par secteur, ouvrez un cas pour voir le détail.",
+    "Certains projets ont été documentés pour donner une idée de ce qui est possible",
   // [À AFFINER] — verbatims témoignages (nom, rôle, entreprise, 1–2 phrases)
   // ou branchement Notion. Placeholders neutres en attendant.
   testimonials: [
