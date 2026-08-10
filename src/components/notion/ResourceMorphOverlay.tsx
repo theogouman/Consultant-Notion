@@ -133,8 +133,11 @@ export default function ResourceMorphOverlay() {
     // Titre volant (FLIP depuis le titre de la carte).
     const doClone = !!(clone && title && titleFinalRect);
     let cloneFrom = "";
-    if (doClone && titleFinalRect) {
-      const scale = titleRect.width / titleFinalRect.width || 1;
+    if (doClone && titleFinalRect && title) {
+      // Échelle UNIFORME = ratio des tailles de police (texte carte / panneau),
+      // pas un ratio de largeurs (le titre carte est un bloc pleine largeur).
+      const panelFont = parseFloat(getComputedStyle(title).fontSize) || 1;
+      const scale = source.titleFontSize / panelFont || 1;
       clone.style.transformOrigin = "top left";
       clone.style.left = `${titleFinalRect.left}px`;
       clone.style.top = `${titleFinalRect.top}px`;
@@ -286,7 +289,8 @@ export default function ResourceMorphOverlay() {
 
     // Titre volant : de sa position finale vers le titre de la carte.
     if (clone && title && titleFinalRect) {
-      const scale = titleRect.width / titleFinalRect.width || 1;
+      const panelFont = parseFloat(getComputedStyle(title).fontSize) || 1;
+      const scale = source.titleFontSize / panelFont || 1;
       clone.style.transformOrigin = "top left";
       clone.style.left = `${titleFinalRect.left}px`;
       clone.style.top = `${titleFinalRect.top}px`;

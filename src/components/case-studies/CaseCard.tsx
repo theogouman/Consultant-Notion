@@ -28,6 +28,7 @@ export default function CaseCard({
     open(index, {
       cardRect: card.getBoundingClientRect(),
       titleRect: title.getBoundingClientRect(),
+      titleFontSize: parseFloat(getComputedStyle(title).fontSize) || 0,
       imageRect: imageRef.current?.getBoundingClientRect() ?? null,
       coverUrl: caseStudy.coverUrl,
     });

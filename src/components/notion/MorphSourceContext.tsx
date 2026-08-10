@@ -19,6 +19,11 @@ import type { CaseStudyDetail } from "@/lib/notion/types";
 export interface MorphSource {
   cardRect: DOMRect;
   titleRect: DOMRect;
+  /** Taille de police du titre de la carte (px) : sert à calculer l'échelle
+   *  UNIFORME du clone (ratio de police), et non un ratio de largeurs de blocs
+   *  — le titre de carte est un bloc pleine largeur, celui du panneau un flex
+   *  ajusté au texte, donc les largeurs ne sont pas comparables. */
+  titleFontSize: number;
   /** Géométrie de la couverture de la carte (pour le morph d'image). */
   imageRect: DOMRect | null;
   coverUrl: string | null;
