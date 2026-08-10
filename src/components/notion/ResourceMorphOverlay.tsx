@@ -120,7 +120,13 @@ export default function ResourceMorphOverlay() {
       flyImg.style.top = `${imageRect.top}px`;
       flyImg.style.width = `${imageRect.width}px`;
       flyImg.style.height = `${imageRect.height}px`;
-      flyImg.style.borderRadius = `${CARD_RADIUS}px`;
+      // La couverture n'est arrondie qu'en HAUT (le bas rejoint le corps) :
+      // les coins hauts restent arrondis pendant TOUT le morph (carte 16 →
+      // panneau 24) au lieu de passer par des angles droits.
+      flyImg.style.borderTopLeftRadius = `${CARD_RADIUS}px`;
+      flyImg.style.borderTopRightRadius = `${CARD_RADIUS}px`;
+      flyImg.style.borderBottomLeftRadius = "0px";
+      flyImg.style.borderBottomRightRadius = "0px";
       flyImg.style.opacity = "1";
     }
 
@@ -165,14 +171,16 @@ export default function ResourceMorphOverlay() {
                 top: `${imageRect.top}px`,
                 width: `${imageRect.width}px`,
                 height: `${imageRect.height}px`,
-                borderRadius: `${CARD_RADIUS}px`,
+                borderTopLeftRadius: `${CARD_RADIUS}px`,
+                borderTopRightRadius: `${CARD_RADIUS}px`,
               },
               {
                 left: `${panelImgRect.left}px`,
                 top: `${panelImgRect.top}px`,
                 width: `${panelImgRect.width}px`,
                 height: `${panelImgRect.height}px`,
-                borderRadius: "0px",
+                borderTopLeftRadius: `${PANEL_RADIUS}px`,
+                borderTopRightRadius: `${PANEL_RADIUS}px`,
               },
             ],
             SPRING,
@@ -248,7 +256,10 @@ export default function ResourceMorphOverlay() {
       flyImg.style.top = `${panelImgRect.top}px`;
       flyImg.style.width = `${panelImgRect.width}px`;
       flyImg.style.height = `${panelImgRect.height}px`;
-      flyImg.style.borderRadius = "0px";
+      flyImg.style.borderTopLeftRadius = `${PANEL_RADIUS}px`;
+      flyImg.style.borderTopRightRadius = `${PANEL_RADIUS}px`;
+      flyImg.style.borderBottomLeftRadius = "0px";
+      flyImg.style.borderBottomRightRadius = "0px";
       flyImg.style.opacity = "1";
       flyImg.animate(
         [
@@ -257,14 +268,16 @@ export default function ResourceMorphOverlay() {
             top: `${panelImgRect.top}px`,
             width: `${panelImgRect.width}px`,
             height: `${panelImgRect.height}px`,
-            borderRadius: "0px",
+            borderTopLeftRadius: `${PANEL_RADIUS}px`,
+            borderTopRightRadius: `${PANEL_RADIUS}px`,
           },
           {
             left: `${imageRect.left}px`,
             top: `${imageRect.top}px`,
             width: `${imageRect.width}px`,
             height: `${imageRect.height}px`,
-            borderRadius: `${CARD_RADIUS}px`,
+            borderTopLeftRadius: `${CARD_RADIUS}px`,
+            borderTopRightRadius: `${CARD_RADIUS}px`,
           },
         ],
         SPRING,

@@ -12,7 +12,7 @@ export default function About() {
         <Reveal>
           <HandwriteText
             text={about.eyebrow}
-            className="mb-4 text-3xl sm:text-4xl"
+            className="mb-2 text-xl sm:text-2xl"
           />
           <h2 className="nc-title text-3xl sm:text-4xl">{about.name}</h2>
           <p className="mt-3 text-lg font-medium text-accent">{about.headline}</p>
@@ -27,17 +27,24 @@ export default function About() {
 
         {about.certifications.length > 0 && (
           <Reveal className="mt-8">
-            <div className="flex flex-wrap items-center gap-5 sm:gap-6">
+            {/* Badges sur une seule ligne : compacts et resserrés (mobile :
+                répartis edge-to-edge ; desktop : groupés à gauche). Chaque
+                badge affiche l'intitulé de la certification en tooltip au
+                survol (technique transitions.dev · tooltip, pur CSS). */}
+            <div className="flex flex-nowrap items-center justify-between gap-2 sm:justify-start sm:gap-4">
               {about.certifications.map((cert) => (
-                <Image
-                  key={cert.src}
-                  src={cert.src}
-                  alt={cert.label}
-                  title={cert.label}
-                  width={72}
-                  height={72}
-                  className="h-16 w-16 object-contain sm:h-[72px] sm:w-[72px]"
-                />
+                <span key={cert.src} className="t-tt-wrap">
+                  <Image
+                    src={cert.src}
+                    alt={cert.label}
+                    width={56}
+                    height={56}
+                    className="h-11 w-11 object-contain sm:h-14 sm:w-14"
+                  />
+                  <span className="t-tt" role="tooltip">
+                    {cert.label}
+                  </span>
+                </span>
               ))}
             </div>
           </Reveal>

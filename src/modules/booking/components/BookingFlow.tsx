@@ -17,6 +17,13 @@ import type { AvailableDay, Situation, Slot } from "../types";
 
 type Phase = "picking" | "form" | "done";
 
+/** En-tête par défaut de l'écran de choix du créneau (utilisé par le modal). */
+const DEFAULT_HEADING = {
+  title: "Quel serait le meilleur moment pour toi ?",
+  subtitle:
+    "Réserve le créneau qui te convient pour qu'on réalise un audit sur ton organisation actuelle",
+};
+
 const EMPTY_VALUES: FormValues = {
   name: "",
   email: "",
@@ -32,7 +39,16 @@ const EMPTY_VALUES: FormValues = {
  * La barre de progression est collée au haut du modal pendant le formulaire ;
  * l'en-tête (titre/sous-titre) ne s'affiche que sur l'écran de choix du créneau.
  */
-export default function BookingFlow() {
+export default function BookingFlow({
+  heading = DEFAULT_HEADING,
+  onInteract,
+}: {
+  /** En-tête de l'écran de choix du créneau (copywriting propre à l'appelant). */
+  heading?: { title: string; subtitle: string };
+  /** Appelé quand l'utilisateur avance (choix de date / de créneau) — permet
+   *  à un parent (booker embarqué) de recentrer la vue. */
+  onInteract?: () => void;
+} = {}) {
   const [leadTimezone, setLeadTimezone] = useState<string>("Europe/Paris");
   const [days, setDays] = useState<AvailableDay[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +92,7 @@ export default function BookingFlow() {
     setSlot(s);
     setServerError(null);
     setPhase("form");
+    onInteract?.();
   }
 
   function handleTimezoneChange(tz: string) {
@@ -146,11 +163,10 @@ export default function BookingFlow() {
               {/* pr-12 : réserve la place de la croix de fermeture. */}
               <header className="mb-6 pr-12">
                 <h1 className="nc-title text-2xl sm:text-3xl">
-                  Quel serait le meilleur moment pour toi ?
+                  {heading.title}
                 </h1>
                 <p className="mt-2 text-[0.95rem] text-muted">
-                  Réserve le créneau qui te convient pour qu'on réalise un audit
-                  sur ton organisation actuelle
+                  {heading.subtitle}
                 </p>
               </header>
               <SlotPicker
@@ -159,6 +175,7 @@ export default function BookingFlow() {
                 loading={loading}
                 onSelect={handleSelect}
                 onTimezoneChange={handleTimezoneChange}
+                onSelectDate={onInteract}
               />
             </>
           )}

@@ -83,12 +83,13 @@ export const about = {
     "Le vrai test d’une organisation, ce n’est pas le jour de la livraison : c’est douze mois plus tard, quand l’équipe l’utilise encore.",
   ],
   // Badges de certification Notion (images dans public/images/Annexes).
+  // `label` = intitulé exact de la certification, affiché en tooltip au survol.
   certifications: [
-    { src: "/images/Annexes/Essentials Badge.png", label: "Notion Essentials" },
-    { src: "/images/Annexes/Workflow Badge.png", label: "Notion Workflow" },
-    { src: "/images/Annexes/Advanced Badge.png", label: "Notion Advanced" },
-    { src: "/images/Annexes/Admin Badge.png", label: "Notion Admin" },
-    { src: "/images/Annexes/AI Badge.png", label: "Notion AI" },
+    { src: "/images/Annexes/Essentials Badge.png", label: "Notion Academy Essentials" },
+    { src: "/images/Annexes/Workflow Badge.png", label: "Notion Academy Workflows" },
+    { src: "/images/Annexes/Advanced Badge.png", label: "Notion Academy Advanced" },
+    { src: "/images/Annexes/Admin Badge.png", label: "Notion Certified Admin" },
+    { src: "/images/Annexes/AI Badge.png", label: "Notion Academy AI" },
   ] as { src: string; label: string }[],
   // [À AFFINER] — inclure YouTube / newsletter comme preuve, ou non.
   socialProof: [] as { label: string; href: string }[],
@@ -127,10 +128,14 @@ export const faq = {
 };
 
 export const finalCta = {
-  eyebrow: "Prochaine étape",
-  title: "Faisons le point sur votre organisation.",
-  reassurance:
-    "20 minutes, gratuit, sans engagement. Je vous dis franchement si je peux vous aider.",
+  // En-tête du booker EMBARQUÉ dans la page (section « rendez-vous »).
+  // Ce copywriting est propre à cette section : il n'est PAS repris dans le
+  // modal de réservation, qui garde son en-tête par défaut.
+  bookingHeading: {
+    title: "Faisons un point sur votre organisation",
+    subtitle:
+      "1h pour faire un audit de votre organisation et déterminer si Notion est pertinent pour vous (ou pas)",
+  },
 };
 
 export const footer = {

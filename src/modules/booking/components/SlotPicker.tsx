@@ -29,12 +29,15 @@ export default function SlotPicker({
   loading,
   onSelect,
   onTimezoneChange,
+  onSelectDate,
 }: {
   days: AvailableDay[];
   leadTimezone: string;
   loading: boolean;
   onSelect: (slot: Slot) => void;
   onTimezoneChange: (tz: string) => void;
+  /** Notifie le parent qu'une date a été choisie (pour recentrer la vue). */
+  onSelectDate?: () => void;
 }) {
   const availByDate = useMemo(
     () => new Map(days.map((d) => [d.date, d.slots])),
@@ -103,6 +106,7 @@ export default function SlotPicker({
   function selectDate(date: string) {
     setActiveDate(date);
     morphTo(() => setView("day"), "day");
+    onSelectDate?.();
   }
 
   function backToMonth() {
