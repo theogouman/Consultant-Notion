@@ -47,12 +47,13 @@ export default function About() {
             />
           </div>
 
-          {/* Colonne texte — desktop : à droite. */}
-          <div className="px-6 pb-10 pt-1 sm:py-12 sm:pl-6 sm:pr-12">
+          {/* Colonne texte — desktop : à droite. pt-6 en mobile : plus d'espace
+              entre la photo empilée au-dessus et le titre « Enchanté ». */}
+          <div className="px-6 pb-10 pt-6 sm:py-12 sm:pl-6 sm:pr-12">
             <Reveal>
               <HandwriteText
                 text={about.eyebrow}
-                className="mb-2 text-xl sm:text-2xl"
+                className="mb-2 text-base sm:text-lg"
               />
               <h2 className="nc-title text-3xl sm:text-4xl">{about.name}</h2>
             </Reveal>

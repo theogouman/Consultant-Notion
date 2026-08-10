@@ -37,6 +37,7 @@ export default function HandwriteText({
   }, []);
 
   const chars = Array.from(text);
+  const isEmoji = (c: string) => /\p{Extended_Pictographic}/u.test(c);
 
   return (
     <span
@@ -49,7 +50,11 @@ export default function HandwriteText({
           <span
             key={i}
             className="nc-handwrite__char"
-            style={{ transitionDelay: `${i * 70}ms` }}
+            // Les emoji ne doivent pas être italiques.
+            style={{
+              transitionDelay: `${i * 70}ms`,
+              ...(isEmoji(c) ? { fontStyle: "normal" } : null),
+            }}
           >
             {c === " " ? " " : c}
           </span>

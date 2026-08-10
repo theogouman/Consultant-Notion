@@ -474,6 +474,46 @@ body {
   }
 }
 
+/* --- Accordéon FAQ (transitions.dev · accordion) -------------------------- */
+/* Hauteur animée sans mesure JS : grid-template-rows 0fr↔1fr. Le contenu fond
+   (opacity) et se dé-floute (blur) ; le chevron se retourne. */
+.t-acc-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 250ms var(--ease-signature);
+}
+.t-acc[data-open="true"] .t-acc-panel {
+  grid-template-rows: 1fr;
+}
+.t-acc-panel-inner {
+  overflow: hidden;
+  opacity: 0;
+  filter: blur(2px);
+  transition:
+    opacity 250ms var(--ease-signature),
+    filter 250ms var(--ease-signature);
+}
+.t-acc[data-open="true"] .t-acc-panel-inner {
+  opacity: 1;
+  filter: blur(0);
+}
+.t-acc-chevron svg {
+  transition: transform 250ms var(--ease-signature);
+}
+.t-acc-chevron path {
+  vector-effect: non-scaling-stroke;
+}
+.t-acc[data-open="true"] .t-acc-chevron svg {
+  transform: scaleY(-1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .t-acc-panel,
+  .t-acc-panel-inner,
+  .t-acc-chevron svg {
+    transition: none !important;
+  }
+}
+
 /* ==========================================================================
    « Comment ça se passe » — cartes empilées au scroll (ProcessStack)
    Mécanique portée de theogouman/sales-offers (#inclusions).
