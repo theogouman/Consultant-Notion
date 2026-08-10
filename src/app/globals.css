@@ -383,6 +383,472 @@ body {
   }
 }
 
+/* --- Écriture progressive « manuscrite » (HandwriteText) ------------------ */
+.nc-handwrite {
+  position: relative;
+  display: inline-block;
+  color: var(--color-accent);
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.nc-handwrite__char {
+  display: inline-block;
+  white-space: pre;
+  opacity: 0;
+  transform: translateY(0.28em) rotate(-5deg);
+  transition:
+    opacity 0.4s var(--ease-signature),
+    transform 0.4s var(--ease-signature);
+}
+.nc-handwrite.is-on .nc-handwrite__char {
+  opacity: 1;
+  transform: none;
+}
+.nc-handwrite__underline {
+  position: absolute;
+  left: 0;
+  bottom: -0.32em;
+  width: 100%;
+  height: 0.5em;
+  overflow: visible;
+}
+.nc-handwrite__underline path {
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+}
+.nc-handwrite.is-on .nc-handwrite__underline path {
+  transition: stroke-dashoffset 0.9s var(--ease-signature) 0.5s;
+  stroke-dashoffset: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nc-handwrite__char {
+    opacity: 1;
+    transform: none;
+  }
+  .nc-handwrite__underline path {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ==========================================================================
+   « Comment ça se passe » — cartes empilées au scroll (ProcessStack)
+   Mécanique portée de theogouman/sales-offers (#inclusions).
+   ========================================================================== */
+.nc-proc-scroll {
+  position: relative;
+}
+.nc-proc-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.nc-proc-header {
+  flex-shrink: 0;
+  text-align: center;
+  padding: clamp(2.5rem, 8vh, 6rem) 1.25rem 1.75rem;
+}
+.nc-proc-cards {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1.25rem 1.5rem;
+}
+.nc-proc-card {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  box-shadow: var(--nc-shadow-2);
+}
+/* Cartes de la pile : superposées en absolu (sauf repli statique). */
+.nc-proc-card:not(:first-child):not(.is-static) {
+  position: absolute;
+  top: 0;
+  left: 1.25rem;
+  right: 1.25rem;
+  width: auto;
+  will-change: transform;
+  contain: layout style paint;
+}
+.nc-proc-card.is-static:not(:first-child) {
+  margin-top: 1.25rem;
+}
+.nc-proc-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  height: 100%;
+  overflow: hidden;
+}
+.nc-proc-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.75rem 1.75rem 1.25rem;
+  min-width: 0;
+}
+.nc-proc-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.nc-proc-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-full);
+  background: var(--color-raised);
+  color: var(--color-muted);
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+.nc-proc-quote {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.nc-proc-num {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-full);
+  background: rgba(224, 98, 90, 0.1);
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.nc-proc-title {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  color: var(--color-ink);
+}
+.nc-proc-desc {
+  margin-top: 0.4rem;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: var(--color-muted);
+}
+.nc-proc-visual {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 120% at 100% 0%, rgba(224, 98, 90, 0.08), transparent 60%),
+    var(--color-raised);
+  border-top: 1px solid var(--color-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  min-height: 0;
+}
+@media (min-width: 768px) {
+  .nc-proc-header {
+    padding-bottom: 2rem;
+  }
+  .nc-proc-grid {
+    grid-template-columns: 1.05fr 1fr;
+    grid-template-rows: 1fr;
+  }
+  .nc-proc-content {
+    padding: 2.5rem;
+    gap: 1.5rem;
+  }
+  .nc-proc-title {
+    font-size: 1.5rem;
+  }
+  .nc-proc-visual {
+    border-top: 0;
+    border-left: 1px solid var(--color-line);
+  }
+}
+
+/* ── Visuel 1 : chat (Appel de qualification) ─────────────────────────────── */
+.nc-v-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 320px;
+}
+.nc-v-bubble {
+  max-width: 85%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  opacity: 0;
+}
+.nc-v-bubble--in {
+  align-self: flex-start;
+  background: var(--color-card);
+  color: var(--color-ink);
+  border: 1px solid var(--color-line);
+  border-bottom-left-radius: 4px;
+}
+.nc-v-bubble--out {
+  align-self: flex-end;
+  background: var(--color-accent);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.nc-v-typing {
+  align-self: flex-start;
+  display: inline-flex;
+  gap: 4px;
+  padding: 0.6rem 0.8rem;
+  border-radius: 14px;
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  opacity: 0;
+}
+.nc-v-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-muted);
+}
+.nc-proc-visual.play .nc-v-bubble--in {
+  animation: nc-v-pop 0.45s var(--ease-signature) 0.05s forwards;
+}
+.nc-proc-visual.play .nc-v-bubble--out {
+  animation: nc-v-pop 0.45s var(--ease-signature) 0.6s forwards;
+}
+.nc-proc-visual.play .nc-v-typing {
+  animation: nc-v-pop 0.35s var(--ease-signature) 1.05s forwards;
+}
+.nc-proc-visual.play .nc-v-typing span {
+  animation: nc-v-blink 1s ease-in-out 1.2s infinite;
+}
+.nc-proc-visual.play .nc-v-typing span:nth-child(2) {
+  animation-delay: 1.35s;
+}
+.nc-proc-visual.play .nc-v-typing span:nth-child(3) {
+  animation-delay: 1.5s;
+}
+@keyframes nc-v-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes nc-v-blink {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+/* ── Visuel 2 : audit (checklist) ─────────────────────────────────────────── */
+.nc-v-audit {
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.nc-v-audit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.92rem;
+  color: var(--color-ink);
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  opacity: 0;
+  transform: translateX(-10px);
+}
+.nc-v-check {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+}
+.nc-v-check svg {
+  width: 12px;
+  height: 12px;
+  stroke-dasharray: 16;
+  stroke-dashoffset: 16;
+}
+.nc-proc-visual.play .nc-v-audit-row {
+  animation: nc-v-slidein 0.4s var(--ease-signature) forwards;
+  animation-delay: calc(var(--i) * 0.18s);
+}
+.nc-proc-visual.play .nc-v-check svg {
+  animation: nc-v-draw 0.35s ease-out forwards;
+  animation-delay: calc(var(--i) * 0.18s + 0.2s);
+}
+@keyframes nc-v-slidein {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes nc-v-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ── Visuel 3 : construction (blocs qui s'assemblent) ─────────────────────── */
+.nc-v-build {
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.nc-v-row {
+  display: flex;
+  gap: 0.55rem;
+}
+.nc-v-block {
+  height: 26px;
+  border-radius: 8px;
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  flex: 1;
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+}
+.nc-v-block--title {
+  height: 34px;
+  background: linear-gradient(90deg, rgba(224, 98, 90, 0.18), rgba(224, 98, 90, 0.06));
+  border-color: transparent;
+}
+.nc-v-block--sm {
+  height: 44px;
+}
+.nc-proc-visual.play .nc-v-block {
+  animation: nc-v-assemble 0.45s var(--ease-signature) forwards;
+  animation-delay: calc(var(--i) * 0.14s);
+}
+@keyframes nc-v-assemble {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Visuel 4 : prise en main (anneau + coche) ────────────────────────────── */
+.nc-v-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+.nc-v-ring {
+  width: 116px;
+  height: 116px;
+  transform: rotate(-90deg);
+}
+.nc-v-ring-bg {
+  fill: none;
+  stroke: var(--color-line);
+  stroke-width: 8;
+}
+.nc-v-ring-fg {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 314;
+  stroke-dashoffset: 314;
+}
+.nc-v-ring-check {
+  stroke: var(--color-accent);
+  stroke-dasharray: 80;
+  stroke-dashoffset: 80;
+  transform: rotate(90deg);
+  transform-origin: 60px 60px;
+}
+.nc-v-done-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  opacity: 0;
+}
+.nc-proc-visual.play .nc-v-ring-fg {
+  animation: nc-v-ringfill 0.9s var(--ease-signature) 0.1s forwards;
+}
+.nc-proc-visual.play .nc-v-ring-check {
+  animation: nc-v-draw2 0.4s ease-out 0.8s forwards;
+}
+.nc-proc-visual.play .nc-v-done-label {
+  animation: nc-v-slidein 0.4s var(--ease-signature) 1s forwards;
+}
+@keyframes nc-v-ringfill {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes nc-v-draw2 {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nc-proc-sticky {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+  .nc-proc-scroll {
+    height: auto !important;
+  }
+  .nc-proc-card {
+    height: auto !important;
+  }
+  /* Visuels : état final visible sans animation. */
+  .nc-proc-visual .nc-v-bubble,
+  .nc-proc-visual .nc-v-typing,
+  .nc-proc-visual .nc-v-audit-row,
+  .nc-proc-visual .nc-v-block,
+  .nc-proc-visual .nc-v-done-label {
+    opacity: 1;
+    transform: none;
+  }
+  .nc-proc-visual .nc-v-check svg,
+  .nc-proc-visual .nc-v-ring-fg,
+  .nc-proc-visual .nc-v-ring-check {
+    stroke-dashoffset: 0;
+  }
+}
+
 /* --- Bordure conique corail rotative (.nc-shine-card) --------------------- */
 @property --nc-shine-angle {
   syntax: "<angle>";

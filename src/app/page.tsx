@@ -2,7 +2,7 @@ import BookingModalProvider from "@/modules/booking/components/BookingModalProvi
 import Header from "@/components/sections/Header";
 import Hero from "@/components/sections/Hero";
 import ProofBar from "@/components/sections/ProofBar";
-import Process from "@/components/sections/Process";
+import ProcessStack from "@/components/sections/ProcessStack";
 import CaseStudies from "@/components/sections/CaseStudies";
 import About from "@/components/sections/About";
 import Faq from "@/components/sections/Faq";
@@ -26,7 +26,7 @@ export default function Home() {
       <main>
         <Hero />
         <ProofBar />
-        <Process />
+        <ProcessStack />
         <CaseStudies />
         <About />
         <Faq />

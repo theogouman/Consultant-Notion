@@ -18,7 +18,8 @@ export const hero = {
 
 export const howItWorks = {
   eyebrow: "Comment ça se passe",
-  title: "Quatre étapes, du premier appel à la prise en main.",
+  title: "Notre méthode en 4 étapes",
+  subtitle: "On l’optimise en continue depuis 2022",
   steps: [
     {
       title: "Appel de qualification.",
@@ -40,7 +41,8 @@ export const howItWorks = {
 };
 
 export const caseStudies = {
-  title: "Ils avaient un problème d’organisation avant de",
+  title:
+    "Ils avaient aussi une organisation chaotique.\nVoilà comment on a rendu leurs équipes plus efficaces ↓",
   subtitle:
     "Certains projets ont été documentés pour donner une idée de ce qui est possible",
   // [À AFFINER] — verbatims témoignages (nom, rôle, entreprise, 1–2 phrases)
@@ -71,7 +73,7 @@ export const caseStudies = {
 };
 
 export const about = {
-  eyebrow: "Qui je suis",
+  eyebrow: "Enchanté 👋",
   name: "Théo Gouman",
   headline: "Consultant Notion. +100 entreprises accompagnées depuis 2022.",
   // [À AFFINER] — bio 3–4 phrases, voix de Théo, angle « faire moins pour mieux faire ».
@@ -80,8 +82,14 @@ export const about = {
     "Mon travail ne commence pas par Notion, il commence par vos enjeux. Ce qui doit être suivi, décidé, partagé — et tout ce qui, au contraire, encombre plus qu’il n’aide. Je construis ensuite le système le plus simple qui y répond.",
     "Le vrai test d’une organisation, ce n’est pas le jour de la livraison : c’est douze mois plus tard, quand l’équipe l’utilise encore.",
   ],
-  // [À AFFINER] — certifications Notion exactes à afficher.
-  certifications: ["Notion Certified Consultant", "Notion Certified"] as string[],
+  // Badges de certification Notion (images dans public/images/Annexes).
+  certifications: [
+    { src: "/images/Annexes/Essentials Badge.png", label: "Notion Essentials" },
+    { src: "/images/Annexes/Workflow Badge.png", label: "Notion Workflow" },
+    { src: "/images/Annexes/Advanced Badge.png", label: "Notion Advanced" },
+    { src: "/images/Annexes/Admin Badge.png", label: "Notion Admin" },
+    { src: "/images/Annexes/AI Badge.png", label: "Notion AI" },
+  ] as { src: string; label: string }[],
   // [À AFFINER] — inclure YouTube / newsletter comme preuve, ou non.
   socialProof: [] as { label: string; href: string }[],
 };

@@ -15,7 +15,9 @@ export default async function CaseStudies() {
   return (
     <Section id="etudes-de-cas" width="wide">
       <Reveal className="mb-10 max-w-2xl">
-        <h2 className="nc-title text-3xl sm:text-4xl">{copy.title}</h2>
+        <h2 className="nc-title whitespace-pre-line text-3xl sm:text-4xl">
+          {copy.title}
+        </h2>
         <p className="mt-4 text-lg leading-relaxed text-muted">{copy.subtitle}</p>
       </Reveal>
 

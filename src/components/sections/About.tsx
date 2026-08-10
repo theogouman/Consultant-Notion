@@ -1,14 +1,19 @@
+import Image from "next/image";
 import Section from "@/components/ui/Section";
 import Reveal from "@/components/ui/Reveal";
+import HandwriteText from "@/components/ui/HandwriteText";
 import { about } from "@/lib/content";
 
-/** Bloc 9 — Qui je suis (Théo Gouman). */
+/** Bloc 9 — Enchanté (Théo Gouman). */
 export default function About() {
   return (
     <Section id="qui-je-suis" width="narrow">
       <div className="rounded-md border border-line bg-card p-8 nc-shadow-2 sm:p-12">
         <Reveal>
-          <p className="nc-eyebrow mb-3">{about.eyebrow}</p>
+          <HandwriteText
+            text={about.eyebrow}
+            className="mb-4 text-3xl sm:text-4xl"
+          />
           <h2 className="nc-title text-3xl sm:text-4xl">{about.name}</h2>
           <p className="mt-3 text-lg font-medium text-accent">{about.headline}</p>
         </Reveal>
@@ -22,17 +27,17 @@ export default function About() {
 
         {about.certifications.length > 0 && (
           <Reveal className="mt-8">
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap items-center gap-5 sm:gap-6">
               {about.certifications.map((cert) => (
-                <span
-                  key={cert}
-                  className="inline-flex items-center gap-2 rounded-full border border-line bg-raised px-4 py-2 text-sm font-medium text-ink"
-                >
-                  <span aria-hidden className="text-accent">
-                    ◆
-                  </span>
-                  {cert}
-                </span>
+                <Image
+                  key={cert.src}
+                  src={cert.src}
+                  alt={cert.label}
+                  title={cert.label}
+                  width={72}
+                  height={72}
+                  className="h-16 w-16 object-contain sm:h-[72px] sm:w-[72px]"
+                />
               ))}
             </div>
           </Reveal>
