@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Reveal from "@/components/ui/Reveal";
+import AuditNetwork from "@/components/sections/AuditNetwork";
 import { howItWorks } from "@/lib/content";
 
 /**
@@ -268,33 +269,7 @@ function StepVisual({ step }: { step: number }) {
     );
   }
   if (step === 1) {
-    const items = [
-      "Outils éparpillés",
-      "Process implicites",
-      "Notion en friche",
-      "Doublons partout",
-    ];
-    return (
-      <ul className="nc-v-audit">
-        {items.map((it, i) => (
-          <li key={i} className="nc-v-audit-row" style={{ ["--i" as string]: i }}>
-            <span className="nc-v-check">
-              <svg viewBox="0 0 16 16" aria-hidden>
-                <path
-                  d="M3 8.5l3 3 7-7"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            {it}
-          </li>
-        ))}
-      </ul>
-    );
+    return <AuditNetwork />;
   }
   if (step === 2) {
     return (

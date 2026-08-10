@@ -940,61 +940,27 @@ body {
   100% { opacity: 0; transform: scale(0.92) translateY(14px); }
 }
 
-/* ── Visuel 2 : audit (checklist) ─────────────────────────────────────────── */
-.nc-v-audit {
+/* ── Visuel 2 : réseau d'audit (composant AuditNetwork) ───────────────────── */
+/* Alias des variables de couleur pour le composant (qui lit --accent /
+   --accent-strong ; elles cascadent dans le SVG). */
+.nc-v-net {
   width: 100%;
-  max-width: 300px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
+  max-width: 340px;
+  --accent: var(--color-accent);
+  --accent-strong: var(--color-accent-strong);
 }
-.nc-v-audit-row {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  font-size: 0.92rem;
-  color: var(--color-ink);
-  background: var(--color-card);
-  border: 1px solid var(--color-line);
-  border-radius: 10px;
-  padding: 0.5rem 0.75rem;
-  opacity: 0;
-  transform: translateX(-10px);
+.nc-v-net-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
 }
-.nc-v-check {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  color: #fff;
-}
-.nc-v-check svg {
-  width: 12px;
-  height: 12px;
-  stroke-dasharray: 16;
-  stroke-dashoffset: 16;
-}
-.nc-proc-visual.play .nc-v-audit-row {
-  animation: nc-v-slidein 0.4s var(--ease-signature) forwards;
-  animation-delay: calc(var(--i) * 0.18s);
-}
-.nc-proc-visual.play .nc-v-check svg {
-  animation: nc-v-draw 0.35s ease-out forwards;
-  animation-delay: calc(var(--i) * 0.18s + 0.2s);
-}
+
+/* Réutilisé par la carte 4 (blocs) — conservé. */
 @keyframes nc-v-slidein {
   to {
     opacity: 1;
     transform: none;
-  }
-}
-@keyframes nc-v-draw {
-  to {
-    stroke-dashoffset: 0;
   }
 }
 
@@ -1109,13 +1075,11 @@ body {
     height: auto !important;
   }
   /* Visuels : état final visible sans animation. */
-  .nc-proc-visual .nc-v-audit-row,
   .nc-proc-visual .nc-v-block,
   .nc-proc-visual .nc-v-done-label {
     opacity: 1;
     transform: none;
   }
-  .nc-proc-visual .nc-v-check svg,
   .nc-proc-visual .nc-v-ring-fg,
   .nc-proc-visual .nc-v-ring-check {
     stroke-dashoffset: 0;
