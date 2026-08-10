@@ -622,89 +622,282 @@ body {
   }
 }
 
-/* ── Visuel 1 : chat (Appel de qualification) ─────────────────────────────── */
-.nc-v-chat {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+/* ── Visuel 1 : chat iMessage → Google Meet (boucle 8s) ───────────────────── */
+/* Timeline maîtresse pilotée par --nc-anim-state (running/paused) posé sur
+   .nc-proc-visual par playVisual() selon la carte active. Portée de
+   theogouman/sales-offers. */
+
+.nc-anim-root {
+  position: relative;
   width: 100%;
   max-width: 320px;
+  min-height: 200px;
+  overflow: hidden;
 }
-.nc-v-bubble {
-  max-width: 85%;
-  padding: 0.6rem 0.85rem;
-  border-radius: 14px;
-  font-size: 0.9rem;
-  line-height: 1.35;
+
+/* Scène iMessage */
+.nc-anim-imessage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
   opacity: 0;
 }
-.nc-v-bubble--in {
-  align-self: flex-start;
-  background: var(--color-card);
-  color: var(--color-ink);
-  border: 1px solid var(--color-line);
-  border-bottom-left-radius: 4px;
+.nc-proc-visual.play .nc-anim-imessage {
+  animation: nc-anim-scene-msg 8s var(--ease-signature) infinite;
+  animation-play-state: var(--nc-anim-state, running);
 }
-.nc-v-bubble--out {
+
+.nc-anim-bubble-in {
+  align-self: flex-start;
+  max-width: 88%;
+  background: #f1f1f3;
+  color: #1a1a1a;
+  border-radius: 18px 18px 18px 5px;
+  padding: 11px 15px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  transform: translateY(14px) scale(0.96);
+}
+.nc-proc-visual.play .nc-anim-bubble-in {
+  animation: nc-anim-bub-left 8s var(--ease-signature) infinite;
+  animation-play-state: var(--nc-anim-state, running);
+}
+
+.nc-anim-out-wrap {
   align-self: flex-end;
+  position: relative;
+  max-width: 88%;
+}
+.nc-anim-bubble-out {
   background: var(--color-accent);
   color: #fff;
-  border-bottom-right-radius: 4px;
+  border-radius: 18px 18px 5px 18px;
+  padding: 11px 15px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  transform: translateY(14px) scale(0.96);
 }
-.nc-v-typing {
-  align-self: flex-start;
-  display: inline-flex;
-  gap: 4px;
-  padding: 0.6rem 0.8rem;
-  border-radius: 14px;
-  background: var(--color-card);
-  border: 1px solid var(--color-line);
+.nc-proc-visual.play .nc-anim-bubble-out {
+  animation: nc-anim-bub-right 8s var(--ease-signature) infinite;
+  animation-play-state: var(--nc-anim-state, running);
+}
+
+/* Tapback 👍 sur la bulle sortante */
+.nc-anim-tap {
+  position: absolute;
+  bottom: -7px;
+  left: -7px;
+  width: 26px;
+  height: 26px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  opacity: 0;
+  transform: scale(0);
+  z-index: 10;
+}
+.nc-proc-visual.play .nc-anim-tap {
+  animation: nc-anim-tap-pop 8s var(--ease-signature) infinite;
+  animation-play-state: var(--nc-anim-state, running);
+}
+.nc-anim-tap::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid var(--color-accent);
+  opacity: 0;
+  transform: scale(0.8);
+}
+.nc-proc-visual.play .nc-anim-tap::before {
+  animation: nc-anim-tap-ping 8s var(--ease-signature) infinite;
+  animation-play-state: var(--nc-anim-state, running);
+}
+
+/* Scène Meet */
+.nc-anim-meet {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0;
 }
-.nc-v-typing span {
-  width: 6px;
-  height: 6px;
+.nc-proc-visual.play .nc-anim-meet {
+  animation: nc-anim-scene-meet 8s var(--ease-signature) infinite;
+  animation-play-state: var(--nc-anim-state, running);
+}
+.nc-anim-meet-win {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: scale(0.92) translateY(14px);
+}
+.nc-proc-visual.play .nc-anim-meet-win {
+  animation: nc-anim-meet-win 8s var(--ease-signature) infinite;
+  animation-play-state: var(--nc-anim-state, running);
+}
+.nc-anim-meet-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: var(--color-accent);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+.nc-anim-meet-user {
+  border-radius: var(--radius-xs);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.nc-anim-meet-avatar {
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: var(--color-muted);
+  background: #f1f1f3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
 }
-.nc-proc-visual.play .nc-v-bubble--in {
-  animation: nc-v-pop 0.45s var(--ease-signature) 0.05s forwards;
+.nc-anim-meet-user-main .nc-anim-meet-avatar {
+  width: 52px;
+  height: 52px;
 }
-.nc-proc-visual.play .nc-v-bubble--out {
-  animation: nc-v-pop 0.45s var(--ease-signature) 0.6s forwards;
+.nc-anim-meet-avatar svg {
+  width: 22px;
+  height: 22px;
+  color: #94a3b8;
 }
-.nc-proc-visual.play .nc-v-typing {
-  animation: nc-v-pop 0.35s var(--ease-signature) 1.05s forwards;
+.nc-anim-meet-user-main .nc-anim-meet-avatar svg {
+  width: 26px;
+  height: 26px;
+  color: #1a1a1a;
+  opacity: 0.5;
 }
-.nc-proc-visual.play .nc-v-typing span {
-  animation: nc-v-blink 1s ease-in-out 1.2s infinite;
+.nc-anim-meet-user-self .nc-anim-meet-avatar svg {
+  color: var(--color-accent);
+  opacity: 0.6;
 }
-.nc-proc-visual.play .nc-v-typing span:nth-child(2) {
-  animation-delay: 1.35s;
+.nc-anim-meet-name {
+  font-size: 10px;
+  font-weight: 600;
+  color: #1a1a1a;
+  letter-spacing: -0.01em;
 }
-.nc-proc-visual.play .nc-v-typing span:nth-child(3) {
-  animation-delay: 1.5s;
+.nc-anim-meet-user-main .nc-anim-meet-name {
+  font-size: 11px;
 }
-@keyframes nc-v-pop {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+.nc-anim-meet-bar {
+  background: #fff;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-top: 1px solid #f1f1f3;
 }
-@keyframes nc-v-blink {
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: translateY(0);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(-2px);
-  }
+.nc-anim-meet-bar-label {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--color-muted);
+  margin-right: auto;
+  letter-spacing: -0.01em;
+}
+.nc-anim-meet-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nc-anim-meet-btn-g {
+  background: var(--color-line);
+}
+.nc-anim-meet-btn-r {
+  background: var(--color-accent);
+}
+.nc-anim-meet-btn-g svg {
+  width: 12px;
+  height: 12px;
+  color: var(--color-muted);
+}
+.nc-anim-meet-btn-r svg {
+  width: 12px;
+  height: 12px;
+  color: #fff;
+}
+
+/* Keyframes carte 1 */
+@keyframes nc-anim-scene-msg {
+  0%, 38% { opacity: 1; }
+  43%, 91% { opacity: 0; }
+  95%, 100% { opacity: 1; }
+}
+@keyframes nc-anim-bub-left {
+  0%, 38% { opacity: 1; transform: translateY(0) scale(1); }
+  43% { opacity: 0; transform: translateY(-5px) scale(0.98); }
+  91% { opacity: 0; transform: translateY(0) scale(1); }
+  95%, 100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes nc-anim-bub-right {
+  0%, 8% { opacity: 0; transform: translateY(14px) scale(0.96); }
+  13%, 38% { opacity: 1; transform: translateY(0) scale(1); }
+  43% { opacity: 0; transform: translateY(-5px) scale(0.98); }
+  100% { opacity: 0; transform: translateY(14px) scale(0.96); }
+}
+@keyframes nc-anim-tap-pop {
+  0%, 17% { opacity: 0; transform: scale(0); }
+  19% { opacity: 1; transform: scale(1.4); }
+  21% { opacity: 1; transform: scale(0.9); }
+  23% { opacity: 1; transform: scale(1.05); }
+  24%, 38% { opacity: 1; transform: scale(1); }
+  43% { opacity: 0; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(0); }
+}
+@keyframes nc-anim-tap-ping {
+  0%, 17% { opacity: 0; transform: scale(0.8); }
+  19% { opacity: 0.6; transform: scale(1.1); }
+  24% { opacity: 0; transform: scale(1.6); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+@keyframes nc-anim-scene-meet {
+  0%, 42% { opacity: 0; }
+  46%, 86% { opacity: 1; }
+  91%, 100% { opacity: 0; }
+}
+@keyframes nc-anim-meet-win {
+  0%, 42% { opacity: 0; transform: scale(0.92) translateY(14px); }
+  48%, 84% { opacity: 1; transform: scale(1) translateY(0); }
+  91% { opacity: 0; transform: scale(0.96) translateY(8px); }
+  100% { opacity: 0; transform: scale(0.92) translateY(14px); }
 }
 
 /* ── Visuel 2 : audit (checklist) ─────────────────────────────────────────── */
@@ -876,8 +1069,6 @@ body {
     height: auto !important;
   }
   /* Visuels : état final visible sans animation. */
-  .nc-proc-visual .nc-v-bubble,
-  .nc-proc-visual .nc-v-typing,
   .nc-proc-visual .nc-v-audit-row,
   .nc-proc-visual .nc-v-block,
   .nc-proc-visual .nc-v-done-label {
@@ -888,6 +1079,35 @@ body {
   .nc-proc-visual .nc-v-ring-fg,
   .nc-proc-visual .nc-v-ring-check {
     stroke-dashoffset: 0;
+  }
+
+  /* Carte 1 : iMessage figé (bulles + 👍 visibles), Meet masquée */
+  .nc-anim-imessage,
+  .nc-anim-bubble-in,
+  .nc-anim-bubble-out,
+  .nc-anim-tap,
+  .nc-anim-tap::before,
+  .nc-anim-meet,
+  .nc-anim-meet-win {
+    animation: none !important;
+  }
+  .nc-anim-imessage {
+    opacity: 1;
+  }
+  .nc-anim-bubble-in,
+  .nc-anim-bubble-out {
+    opacity: 1;
+    transform: none;
+  }
+  .nc-anim-tap {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .nc-anim-tap::before {
+    opacity: 0;
+  }
+  .nc-anim-meet {
+    opacity: 0;
   }
 }
 

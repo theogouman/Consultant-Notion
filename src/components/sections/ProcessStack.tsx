@@ -47,7 +47,15 @@ export default function ProcessStack() {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const playVisual = (idx: number) => {
-      cards.forEach((c, i) => c.classList.toggle("is-active", i === idx));
+      cards.forEach((c, i) => {
+        c.classList.toggle("is-active", i === idx);
+        const v = c.querySelector<HTMLElement>(".nc-proc-visual");
+        if (v)
+          v.style.setProperty(
+            "--nc-anim-state",
+            i === idx ? "running" : "paused",
+          );
+      });
       const vis = cards[idx]?.querySelector<HTMLElement>(".nc-proc-visual");
       if (vis) {
         vis.classList.remove("play");
@@ -199,17 +207,62 @@ export default function ProcessStack() {
 function StepVisual({ step }: { step: number }) {
   if (step === 0) {
     return (
-      <div className="nc-v-chat">
-        <div className="nc-v-bubble nc-v-bubble--in">
-          On est un peu perdus dans notre organisation…
+      <div className="nc-anim-root">
+        <div className="nc-anim-imessage">
+          <div className="nc-anim-bubble-in">
+            C&apos;est le chaos dans notre organisation. On passe notre temps à
+            jongler entre les outils pour retrouver les informations…
+          </div>
+          <div className="nc-anim-out-wrap">
+            <div className="nc-anim-bubble-out">
+              On planifie un appel pour regarder ça ?
+            </div>
+            <div className="nc-anim-tap" aria-hidden>👍</div>
+          </div>
         </div>
-        <div className="nc-v-bubble nc-v-bubble--out">
-          On regarde ça ensemble ?
-        </div>
-        <div className="nc-v-typing">
-          <span />
-          <span />
-          <span />
+        <div className="nc-anim-meet">
+          <div className="nc-anim-meet-win">
+            <div className="nc-anim-meet-grid">
+              <div className="nc-anim-meet-user nc-anim-meet-user-main">
+                <div className="nc-anim-meet-avatar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </div>
+                <div className="nc-anim-meet-name">Théo Gouman</div>
+              </div>
+              <div className="nc-anim-meet-user nc-anim-meet-user-self">
+                <div className="nc-anim-meet-avatar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </div>
+                <div className="nc-anim-meet-name">Toi</div>
+              </div>
+            </div>
+            <div className="nc-anim-meet-bar">
+              <span className="nc-anim-meet-bar-label">Notion : Vous × Théo</span>
+              <div className="nc-anim-meet-btn nc-anim-meet-btn-g">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                </svg>
+              </div>
+              <div className="nc-anim-meet-btn nc-anim-meet-btn-g">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11" />
+                  <rect x="2" y="6" width="14" height="12" rx="2" />
+                </svg>
+              </div>
+              <div className="nc-anim-meet-btn nc-anim-meet-btn-r">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" transform="rotate(135 12 12)" />
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
