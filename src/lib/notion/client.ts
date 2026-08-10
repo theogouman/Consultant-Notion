@@ -48,6 +48,9 @@ async function notionFetch(
   }
 
   try {
+    // Par défaut : ISR (revalidate 3600). Si l'appelant demande no-store
+    // (proxy d'images), on n'ajoute pas `next.revalidate` (incompatibles).
+    const noStore = init?.cache === "no-store";
     const res = await fetch(`${NOTION_API}${path}`, {
       ...init,
       headers: {
@@ -56,8 +59,7 @@ async function notionFetch(
         "Content-Type": "application/json",
         ...(init?.headers || {}),
       },
-      // ISR : revalidation gérée par le segment appelant (revalidate).
-      next: { revalidate: 3600 },
+      ...(noStore ? {} : { next: { revalidate: 3600 } }),
     });
 
     if (!res.ok) {
@@ -120,6 +122,23 @@ export async function getPage(pageId: string): Promise<any[]> {
 /** Récupère les blocs enfants d'un bloc donné (pour l'imbrication). */
 export async function getBlockChildren(blockId: string): Promise<any[]> {
   return getPage(blockId);
+}
+
+/**
+ * Récupère les propriétés d'une page (GET /pages/{id}).
+ * Utilisé par le proxy d'images pour obtenir une URL de fichier Notion
+ * fraîche (non expirée) à la demande. `noStore` désactive le cache Next
+ * (le proxy gère lui-même la mise en cache CDN via ses en-têtes).
+ */
+export async function retrievePage(
+  pageId: string,
+  opts?: { noStore?: boolean },
+): Promise<any | null> {
+  const id = normalizeNotionId(pageId);
+  return notionFetch(
+    `/pages/${id}`,
+    opts?.noStore ? { cache: "no-store" } : undefined,
+  );
 }
 
 /* ------------------------------------------------------------------ */

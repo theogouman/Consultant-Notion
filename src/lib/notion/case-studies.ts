@@ -5,6 +5,8 @@ import {
   getTitle,
   getMultiSelect,
   getFirstFileUrl,
+  retrievePage,
+  normalizeNotionId,
 } from "./client";
 import { normalizeBlocks } from "./router";
 import type { CaseStudy, CaseStudyDetail } from "./types";
@@ -27,14 +29,37 @@ const PROP_SECTOR = "Secteur d'activité";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+/**
+ * URL de couverture servie via notre proxy stable `/api/case-cover/[id]`.
+ * On n'embarque JAMAIS l'URL S3 signée de Notion dans le HTML : elle expire
+ * au bout d'une heure (X-Amz-Expires=3600) et casse les images sur trafic
+ * froid. Le proxy résout une URL fraîche côté serveur à la demande et met en
+ * cache les octets au niveau du CDN (voir le route handler).
+ */
+export function coverProxyUrl(pageId: string): string {
+  return `/api/case-cover/${normalizeNotionId(pageId)}`;
+}
+
 function toCaseStudy(page: any): CaseStudy {
   const props = page.properties || {};
+  const hasImage = !!getFirstFileUrl(props, PROP_IMAGE);
   return {
     id: page.id,
     title: getTitle(props, PROP_TITLE) || "Étude de cas",
-    coverUrl: getFirstFileUrl(props, PROP_IMAGE),
+    coverUrl: hasImage ? coverProxyUrl(page.id) : null,
     sectors: getMultiSelect(props, PROP_SECTOR),
   };
+}
+
+/**
+ * Résout à la demande (côté serveur) l'URL de fichier Notion FRAÎCHE de la
+ * couverture d'une page. Utilisé par le proxy d'images. Renvoie null si la
+ * page n'a pas d'image ou si l'appel échoue.
+ */
+export async function getFreshCoverUrl(pageId: string): Promise<string | null> {
+  const page = await retrievePage(pageId, { noStore: true });
+  if (!page) return null;
+  return getFirstFileUrl(page.properties || {}, PROP_IMAGE);
 }
 
 /** Liste des études de cas pour la grille (couverture + titre + secteurs). */

@@ -19,6 +19,7 @@ export default function CaseCard({
   const { open } = useMorph();
   const cardRef = useRef<HTMLButtonElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const imageRef = useRef<HTMLDivElement>(null);
 
   function handleOpen() {
     const card = cardRef.current;
@@ -27,6 +28,7 @@ export default function CaseCard({
     open(index, {
       cardRect: card.getBoundingClientRect(),
       titleRect: title.getBoundingClientRect(),
+      imageRect: imageRef.current?.getBoundingClientRect() ?? null,
       coverUrl: caseStudy.coverUrl,
     });
   }
@@ -38,7 +40,10 @@ export default function CaseCard({
       className="group nc-shadow-3 flex h-full flex-col overflow-hidden rounded-sm bg-card text-left transition-transform duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-page"
       aria-label={`Ouvrir l’étude de cas : ${caseStudy.title}`}
     >
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-raised">
+      <div
+        ref={imageRef}
+        className="relative aspect-[16/10] w-full overflow-hidden bg-raised"
+      >
         {caseStudy.coverUrl ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img

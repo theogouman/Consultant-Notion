@@ -19,6 +19,8 @@ import type { CaseStudyDetail } from "@/lib/notion/types";
 export interface MorphSource {
   cardRect: DOMRect;
   titleRect: DOMRect;
+  /** Géométrie de la couverture de la carte (pour le morph d'image). */
+  imageRect: DOMRect | null;
   coverUrl: string | null;
 }
 
