@@ -413,6 +413,13 @@ body {
   }
 }
 
+/* --- Photo « Enchanté » : fondu discret sur le tout bas (empilement mobile).
+   Voile réduit au minimum : seule une fine bande en bas s'estompe. --------- */
+.nc-photo-fade {
+  -webkit-mask-image: linear-gradient(to bottom, #000 92%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 92%, transparent 100%);
+}
+
 /* --- Tooltip (transitions.dev · tooltip) ---------------------------------- */
 .t-tt-wrap {
   position: relative;
