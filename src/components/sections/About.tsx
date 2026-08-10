@@ -20,15 +20,16 @@ export default function About() {
   return (
     <Section id="qui-je-suis" width="default">
       <div className="relative overflow-hidden rounded-md border border-line bg-card nc-shadow-2">
-        {/* Photo — mobile : empilée en haut, cadrage carré (rogné en bas) +
-            fondu net sur le bord bas. */}
-        <div className="px-5 pt-6 sm:hidden">
-          <div className="nc-photo-fade relative mx-auto aspect-[4/5] w-full overflow-hidden">
+        {/* Photo — mobile : empilée en haut, taille intermédiaire et centrée,
+            cadrage rogné en bas par une coupe NETTE (overflow-hidden, sans
+            masque/voile). */}
+        <div className="px-5 pt-8 sm:hidden">
+          <div className="relative mx-auto aspect-[4/5] w-[80%] max-w-[300px] overflow-hidden">
             <Image
               src={PHOTO}
               alt="Théo Gouman, consultant Notion"
               fill
-              sizes="100vw"
+              sizes="300px"
               className="object-cover object-top"
             />
           </div>

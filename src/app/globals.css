@@ -413,12 +413,6 @@ body {
   }
 }
 
-/* --- Photo « Enchanté » : fondu progressif du bas (empilement mobile) ------ */
-.nc-photo-fade {
-  -webkit-mask-image: linear-gradient(to bottom, #000 86%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 86%, transparent 100%);
-}
-
 /* --- Tooltip (transitions.dev · tooltip) ---------------------------------- */
 .t-tt-wrap {
   position: relative;
