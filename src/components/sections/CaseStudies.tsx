@@ -18,7 +18,6 @@ export default async function CaseStudies() {
         <h2 className="nc-title whitespace-pre-line text-3xl sm:text-4xl">
           {copy.title}
         </h2>
-        <p className="mt-4 text-lg leading-relaxed text-muted">{copy.subtitle}</p>
       </Reveal>
 
       <CaseStudiesGrid caseStudies={items} />

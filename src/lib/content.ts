@@ -43,8 +43,6 @@ export const howItWorks = {
 export const caseStudies = {
   title:
     "Ils avaient aussi une organisation chaotique.\nVoilà comment on a rendu leurs équipes plus efficaces ↓",
-  subtitle:
-    "Certains projets ont été documentés pour donner une idée de ce qui est possible",
   // [À AFFINER] — verbatims témoignages (nom, rôle, entreprise, 1–2 phrases)
   // ou branchement Notion. Placeholders neutres en attendant.
   testimonials: [
