@@ -346,7 +346,7 @@ export default function TeamOrbit() {
 
   return (
     <div ref={rootRef} className="nc-v-orbit" aria-hidden>
-      <svg viewBox="0 0 460 340">
+      <svg viewBox="108 30 244 250">
         <defs>
           <clipPath id="theoclip">
             <circle cx="0" cy="0" r="20" />

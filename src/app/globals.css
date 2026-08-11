@@ -939,14 +939,17 @@ body {
    --accent-strong ; elles cascadent dans le SVG). */
 .nc-v-net {
   width: 100%;
-  max-width: 340px;
+  max-width: 440px;
+  /* Occupe mieux la carte : ratio de la viewBox (400×300), borné en hauteur. */
+  aspect-ratio: 4 / 3;
+  max-height: 100%;
   --accent: var(--color-accent);
   --accent-strong: var(--color-accent-strong);
 }
 .nc-v-net-svg {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   overflow: visible;
 }
 
@@ -1227,7 +1230,10 @@ body {
   position: absolute;
   left: 64px;
   right: 40px;
-  top: 186px;
+  /* Sous le titre (qui finit ~116px dans .content), bien au-dessus des
+     encadrés du mind-map (qui commencent ~186px dans .content) : séparation
+     nette et espacée, ne touche plus le haut des encadrés. */
+  top: 150px;
   height: 1px;
   background: var(--line);
   opacity: 0;
@@ -1330,7 +1336,11 @@ body {
   inset: 0;
   pointer-events: none;
 }
-.nc-v-notion .fly svg {
+/* ⚠️ Cible UNIQUEMENT le svg mind-map (enfant direct de .fly). Sans le `>`,
+   la règle s'appliquait aussi aux <svg> d'icônes des nœuds (.node .ni svg),
+   qui héritaient de position:absolute;inset:0 → icônes collées dans le coin
+   haut-gauche de l'encadré. */
+.nc-v-notion .fly > svg {
   position: absolute;
   inset: 0;
   width: 880px;
@@ -1368,12 +1378,16 @@ body {
 /* ── Visuel 4 : pyramide → orbite (composant TeamOrbit) ───────────────────── */
 .nc-v-orbit {
   width: 100%;
-  max-width: 360px;
+  max-width: 440px;
+  /* viewBox recadrée (108 30 244 250) → occupe mieux la carte, borné en hauteur
+     pour ne pas déborder sur un volet court. */
+  aspect-ratio: 244 / 250;
+  max-height: 100%;
 }
 .nc-v-orbit svg {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   overflow: visible;
 }
 

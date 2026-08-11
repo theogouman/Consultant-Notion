@@ -61,6 +61,30 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <head>
+        {/* Préchargement des polices du titre : réduit le FOUT sur trafic froid
+            (et évite que le swap de police survienne pendant le morph des études
+            de cas, ce qui décalait le titre voyageur). */}
+        <link
+          rel="preload"
+          href="/fonts/SFPRODISPLAYBOLD.OTF"
+          as="font"
+          type="font/otf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/SFPRODISPLAYREGULAR.OTF"
+          as="font"
+          type="font/otf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/SFPRODISPLAYMEDIUM.OTF"
+          as="font"
+          type="font/otf"
+          crossOrigin="anonymous"
+        />
         {/* Sans JS : le contenu à révélation reste visible (robustesse + SEO). */}
         <noscript>
           <style>{`.nc-reveal{opacity:1 !important;transform:none !important}`}</style>

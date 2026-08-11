@@ -93,6 +93,17 @@ export default function ResourceMorphOverlay() {
       return;
     }
 
+    let cancelled = false;
+    let raf = 0;
+
+    // Évite tout flash : on masque le panneau tant que les mesures ne sont pas
+    // prises (en particulier tant qu'on attend la police du titre sur cold).
+    panel.style.opacity = "0";
+
+    const start = () => {
+      if (cancelled) return;
+      panel.style.opacity = "1";
+
     // --- 1) MESURER LES CADRES FINAUX (panneau non transformé) ---
     const panelRect = panel.getBoundingClientRect();
     const panelImgRect = panelImg?.getBoundingClientRect() ?? null;
@@ -157,8 +168,7 @@ export default function ResourceMorphOverlay() {
     }
 
     // --- 3) JOUER LES ANIMATIONS (2 rAF pour garantir l'état initial) ---
-    let cancelled = false;
-    const raf = requestAnimationFrame(() =>
+    raf = requestAnimationFrame(() =>
       requestAnimationFrame(() => {
         if (cancelled) return;
 
@@ -225,6 +235,21 @@ export default function ResourceMorphOverlay() {
         pAnim.onfinish = reveal;
       }),
     );
+    }; // fin start()
+
+    // La police du titre (SF Pro Display 700) doit être prête AVANT de mesurer
+    // et d'animer : sinon, sur trafic froid, le swap de police en cours de morph
+    // décale le titre voyageur du panneau (métriques changées en vol). Sur
+    // trafic chaud (police déjà chargée), démarrage synchrone immédiat.
+    const fonts =
+      typeof document !== "undefined" && "fonts" in document
+        ? document.fonts
+        : null;
+    if (!fonts || fonts.check('700 30px "SF Pro Display"')) {
+      start();
+    } else {
+      fonts.ready.then(start);
+    }
 
     return () => {
       cancelled = true;

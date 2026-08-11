@@ -20,7 +20,7 @@ export default function ProofBar() {
 
   return (
     <section className="border-y border-line/60 bg-card/40">
-      <div className="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8">
+      <div className="mx-auto w-full max-w-6xl px-5 py-6 sm:px-8 sm:py-8">
         <Reveal>
           <div className="nc-marquee w-full" aria-label="Ils nous font confiance">
             {/* Contenu dupliqué exactement pour une boucle sans couture */}
