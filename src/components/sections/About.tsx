@@ -78,7 +78,7 @@ export default function About() {
                         alt={cert.label}
                         width={72}
                         height={72}
-                        className="h-10 w-10 object-contain sm:h-[68px] sm:w-[68px]"
+                        className="h-[54px] w-[54px] object-contain sm:h-[68px] sm:w-[68px]"
                       />
                       <span className="t-tt" role="tooltip">
                         {cert.label}

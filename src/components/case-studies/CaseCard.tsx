@@ -43,7 +43,7 @@ export default function CaseCard({
     >
       <div
         ref={imageRef}
-        className="relative aspect-[16/10] w-full overflow-hidden bg-raised"
+        className="relative aspect-[16/9] w-full overflow-hidden bg-raised"
       >
         {caseStudy.coverUrl ? (
           /* eslint-disable-next-line @next/next/no-img-element */
@@ -60,10 +60,10 @@ export default function CaseCard({
         )}
       </div>
 
-      <div className="relative z-[1] flex flex-1 flex-col gap-3 p-5">
+      <div className="relative z-[1] flex flex-1 flex-col gap-2 p-4">
         <h3
           ref={titleRef}
-          className="nc-title text-lg leading-snug"
+          className="nc-title text-base leading-snug"
         >
           {caseStudy.title}
         </h3>
@@ -72,7 +72,7 @@ export default function CaseCard({
             {caseStudy.sectors.map((sector) => (
               <span
                 key={sector}
-                className="rounded-full bg-raised px-2.5 py-1 text-xs text-muted"
+                className="rounded-full bg-raised px-2 py-0.5 text-[11px] text-muted"
               >
                 {sector}
               </span>

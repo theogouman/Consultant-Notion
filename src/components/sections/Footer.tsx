@@ -6,7 +6,6 @@ import { footer } from "@/lib/content";
  * légale avec tooltip SIREN, réseaux sociaux).
  */
 export default function Footer() {
-  const year = 2026;
   return (
     <footer className="border-t border-line/60 bg-card/40">
       <div className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8">
@@ -54,10 +53,6 @@ export default function Footer() {
             </div>
           </div>
         </div>
-
-        <p className="mt-8 text-xs text-muted">
-          © {year} · {footer.domain}
-        </p>
       </div>
     </footer>
   );
