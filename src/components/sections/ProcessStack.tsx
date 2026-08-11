@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import Reveal from "@/components/ui/Reveal";
 import AuditNetwork from "@/components/sections/AuditNetwork";
+import NotionBuild from "@/components/sections/NotionBuild";
 import { howItWorks } from "@/lib/content";
 
 /**
@@ -257,17 +258,7 @@ function StepVisual({ step }: { step: number }) {
     return <AuditNetwork />;
   }
   if (step === 2) {
-    return (
-      <div className="nc-v-build">
-        <div className="nc-v-block nc-v-block--title" style={{ ["--i" as string]: 0 }} />
-        <div className="nc-v-block" style={{ ["--i" as string]: 1 }} />
-        <div className="nc-v-row">
-          <div className="nc-v-block nc-v-block--sm" style={{ ["--i" as string]: 2 }} />
-          <div className="nc-v-block nc-v-block--sm" style={{ ["--i" as string]: 3 }} />
-        </div>
-        <div className="nc-v-block" style={{ ["--i" as string]: 4 }} />
-      </div>
-    );
+    return <NotionBuild />;
   }
   return (
     <div className="nc-v-done">

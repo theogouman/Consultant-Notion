@@ -952,44 +952,419 @@ body {
   }
 }
 
-/* ── Visuel 3 : construction (blocs qui s'assemblent) ─────────────────────── */
-.nc-v-build {
+/* ── Visuel 3 : fenêtre Notion dark (composant NotionBuild) ───────────────── */
+/* Porté de l'aperçu validé (apercu-carte3-notion.html). Fenêtre 960×620 mise à
+   l'échelle par transform:scale() selon la largeur du conteneur. */
+.nc-v-notion {
+  --accent: #e0625a;
+  --bg: #191919;
+  --sb: #202020;
+  --hover: #2c2c2c;
+  --active: #2f2f2f;
+  --card: #252525;
+  --line: #333333;
+  --line2: #3a3a3a;
+  --tx: #d4d4d3;
+  --tx2: #9b9b98;
+  --tx3: #6f6f6d;
+  --blue: #2383e2;
+  position: relative;
   width: 100%;
-  max-width: 280px;
+  aspect-ratio: 880 / 620;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #191919;
+}
+.nc-v-scaler {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 880px;
+  height: 620px;
+  transform-origin: top left;
+}
+.nc-v-notion-win {
+  width: 880px;
+  height: 620px;
+  background: var(--bg);
+  display: flex;
+  color: var(--tx);
+  font-size: 13px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+}
+
+/* Sidebar */
+.nc-v-notion .sidebar {
+  width: 250px;
+  flex: none;
+  background: var(--sb);
+  border-right: 1px solid #000;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  position: relative;
 }
-.nc-v-row {
+.nc-v-notion .sb-top {
+  padding: 8px;
+}
+.nc-v-notion .ws {
   display: flex;
-  gap: 0.55rem;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
 }
-.nc-v-block {
-  height: 26px;
-  border-radius: 8px;
-  background: var(--color-card);
-  border: 1px solid var(--color-line);
+.nc-v-notion .ws .logo {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #e0625a, #d1504a);
+  flex: none;
+}
+.nc-v-notion .ws .nm {
+  font-weight: 600;
+  font-size: 14px;
+  color: #eaeae8;
+}
+.nc-v-notion .ws .cv {
+  margin-left: auto;
+  color: var(--tx3);
+  display: flex;
+}
+.nc-v-notion .navrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 0 4px;
+}
+.nc-v-notion .navitem {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  color: var(--tx);
+  font-size: 12.5px;
+}
+.nc-v-notion .navicon {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tx2);
+}
+.nc-v-notion .seclbl {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--tx3);
+  padding: 12px 14px 4px;
+  letter-spacing: 0.02em;
+}
+.nc-v-notion .sb-items {
   flex: 1;
-  opacity: 0;
-  transform: translateY(10px) scale(0.98);
+  position: relative;
+  padding: 0 8px;
 }
-.nc-v-block--title {
+.nc-v-notion .sb-bottom {
+  padding: 8px;
+  border-top: 1px solid #000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nc-v-notion .newchat {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #2a2a2a;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--tx);
+  font-size: 12.5px;
+}
+.nc-v-notion .newchat .kbd {
+  margin-left: auto;
+  color: var(--tx3);
+  font-size: 11px;
+}
+.nc-v-notion .compose {
+  width: 34px;
   height: 34px;
-  background: linear-gradient(90deg, rgba(224, 98, 90, 0.18), rgba(224, 98, 90, 0.06));
-  border-color: transparent;
+  flex: none;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tx2);
 }
-.nc-v-block--sm {
+.nc-v-notion svg.ic {
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Main */
+.nc-v-notion .main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.nc-v-notion .topbar {
   height: 44px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-bottom: 1px solid #000;
 }
-.nc-proc-visual.play .nc-v-block {
-  animation: nc-v-assemble 0.45s var(--ease-signature) forwards;
-  animation-delay: calc(var(--i) * 0.14s);
+.nc-v-notion .tb-l {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tx2);
 }
-@keyframes nc-v-assemble {
-  to {
-    opacity: 1;
-    transform: none;
-  }
+.nc-v-notion .crumb {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--tx);
+  font-size: 13px;
+  margin-left: 6px;
+}
+.nc-v-notion .crumb .sep {
+  color: var(--tx3);
+}
+.nc-v-notion .tb-r {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--tx2);
+}
+.nc-v-notion .edited {
+  font-size: 12px;
+  color: var(--tx3);
+}
+.nc-v-notion .avstack {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nc-v-notion .av {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--bg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.nc-v-notion .av img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.nc-v-notion .plus {
+  font-size: 12px;
+  color: var(--tx2);
+}
+.nc-v-notion .share {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tx);
+  font-size: 13px;
+  font-weight: 500;
+}
+.nc-v-notion .tb-ic {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tx2);
+}
+.nc-v-notion .content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Titre de page (sans encadré) */
+.nc-v-notion .pagehead {
+  position: absolute;
+  left: 64px;
+  top: 30px;
+  right: 40px;
+}
+.nc-v-notion .pt-icon {
+  font-size: 38px;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.nc-v-notion .pt-h1 {
+  font-size: 30px;
+  font-weight: 700;
+  color: #eaeae8;
+  letter-spacing: -0.01em;
+}
+.nc-v-notion .pagediv {
+  position: absolute;
+  left: 64px;
+  right: 40px;
+  top: 186px;
+  height: 1px;
+  background: var(--line);
+  opacity: 0;
+}
+
+/* Board Kanban (final) */
+.nc-v-notion .board {
+  position: absolute;
+  left: 64px;
+  top: 30px;
+  right: 30px;
+  opacity: 0;
+}
+.nc-v-notion .board-tools {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.nc-v-notion .btab {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tx3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 6px;
+}
+.nc-v-notion .btab.active {
+  color: var(--tx);
+  border-bottom: 2px solid var(--tx);
+}
+.nc-v-notion .btools-r {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tx3);
+}
+.nc-v-notion .newbtn {
+  background: var(--blue);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 5px 10px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.nc-v-notion .cols {
+  display: flex;
+  gap: 9px;
+}
+.nc-v-notion .col {
+  width: 118px;
+  flex: none;
+}
+.nc-v-notion .col-h {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 5px;
+  padding: 3px 9px;
+  margin-bottom: 10px;
+}
+.nc-v-notion .kcard {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 8px 9px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+}
+.nc-v-notion .kcard .ki {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  background: #4a4a48;
+  flex: none;
+}
+.nc-v-notion .kcard .kb {
+  height: 7px;
+  border-radius: 4px;
+  background: #3d3d3b;
+}
+.nc-v-notion .knew {
+  font-size: 12px;
+  color: var(--tx3);
+  padding: 6px 4px;
+}
+
+/* Fly overlay (mind map) */
+.nc-v-notion .fly {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.nc-v-notion .fly svg {
+  position: absolute;
+  inset: 0;
+  width: 880px;
+  height: 620px;
+  overflow: visible;
+}
+/* ⚠️ Centrage icône : inline-block + vertical-align (PAS de flex/grid). */
+.nc-v-notion .node {
+  position: absolute;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  will-change: left, top;
+}
+.nc-v-notion .node .ni {
+  display: inline-block;
+  vertical-align: middle;
+  width: 20px;
+  height: 20px;
+  margin-right: 11px;
+}
+.nc-v-notion .node .ni svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.nc-v-notion .node .nl {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
+  color: var(--tx);
+  font-weight: 500;
 }
 
 /* ── Visuel 4 : prise en main (anneau + coche) ────────────────────────────── */
@@ -1063,7 +1438,6 @@ body {
     height: auto !important;
   }
   /* Visuels : état final visible sans animation. */
-  .nc-proc-visual .nc-v-block,
   .nc-proc-visual .nc-v-done-label {
     opacity: 1;
     transform: none;
