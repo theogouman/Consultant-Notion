@@ -60,10 +60,10 @@ export default function CaseCard({
         )}
       </div>
 
-      <div className="relative z-[1] flex flex-1 flex-col gap-2 p-4">
+      <div className="relative z-[1] flex flex-1 flex-col gap-2 p-3 sm:p-4">
         <h3
           ref={titleRef}
-          className="nc-title text-base leading-snug"
+          className="nc-title text-sm leading-snug sm:text-base"
         >
           {caseStudy.title}
         </h3>

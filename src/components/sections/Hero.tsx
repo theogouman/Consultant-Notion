@@ -9,7 +9,19 @@ export default function Hero() {
       <div className="mx-auto max-w-3xl text-center">
         <Reveal>
           <h1 className="nc-title nc-balance-wide text-4xl sm:text-5xl md:text-6xl">
-            {hero.title}
+            Transformez votre désordre en une organisation claire avec un{" "}
+            <span className="whitespace-nowrap">
+              Notion
+              {/* Logo Notion intégré à la phrase, juste après le mot. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/Annexes/Notion_app_logo.png"
+                alt="Notion"
+                width={72}
+                height={72}
+                className="ml-[0.2em] inline-block h-[0.78em] w-[0.78em] align-[-0.12em]"
+              />
+            </span>
           </h1>
         </Reveal>
         <Reveal delay={120}>

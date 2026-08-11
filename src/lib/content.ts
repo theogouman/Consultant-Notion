@@ -9,7 +9,8 @@ export const CTA_HREF = "/rdv";
 export const CTA_LABEL = "Faire le point sur mon organisation";
 
 export const hero = {
-  title: "Gagnez en efficacité avec un Notion",
+  title:
+    "Transformez votre désordre en une organisation claire avec un Notion",
   subtitle:
     "On supprime le chaos organisationnel des entreprises en centralisant & automatisant leurs processus dans une solution sur-mesure pour maximiser la productivité",
   cta: "Faire le point sur mon organisation",
@@ -18,7 +19,7 @@ export const hero = {
 export const howItWorks = {
   eyebrow: "Comment ça se passe",
   title: "Notre méthode en 4 étapes",
-  subtitle: "On l’optimise en continue depuis 2022",
+  subtitle: "…On l’optimise en continue depuis 2022",
   steps: [
     {
       title: "Appel de qualification.",

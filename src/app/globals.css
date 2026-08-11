@@ -210,7 +210,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 1.25rem;
+  /* Mobile : espacement resserré entre logos ; desktop plus aéré. */
+  padding: 0 0.5rem;
+}
+@media (min-width: 640px) {
+  .nc-marquee__item {
+    padding: 0 1.25rem;
+  }
 }
 @keyframes nc-marquee {
   from {
@@ -944,14 +950,6 @@ body {
   overflow: visible;
 }
 
-/* Réutilisé par la carte 4 (blocs) — conservé. */
-@keyframes nc-v-slidein {
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 /* ── Visuel 3 : fenêtre Notion dark (composant NotionBuild) ───────────────── */
 /* Porté de l'aperçu validé (apercu-carte3-notion.html). Fenêtre 960×620 mise à
    l'échelle par transform:scale() selon la largeur du conteneur. */
@@ -1367,62 +1365,16 @@ body {
   font-weight: 500;
 }
 
-/* ── Visuel 4 : prise en main (anneau + coche) ────────────────────────────── */
-.nc-v-done {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.9rem;
+/* ── Visuel 4 : pyramide → orbite (composant TeamOrbit) ───────────────────── */
+.nc-v-orbit {
+  width: 100%;
+  max-width: 360px;
 }
-.nc-v-ring {
-  width: 116px;
-  height: 116px;
-  transform: rotate(-90deg);
-}
-.nc-v-ring-bg {
-  fill: none;
-  stroke: var(--color-line);
-  stroke-width: 8;
-}
-.nc-v-ring-fg {
-  fill: none;
-  stroke: var(--color-accent);
-  stroke-width: 8;
-  stroke-linecap: round;
-  stroke-dasharray: 314;
-  stroke-dashoffset: 314;
-}
-.nc-v-ring-check {
-  stroke: var(--color-accent);
-  stroke-dasharray: 80;
-  stroke-dashoffset: 80;
-  transform: rotate(90deg);
-  transform-origin: 60px 60px;
-}
-.nc-v-done-label {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--color-ink);
-  opacity: 0;
-}
-.nc-proc-visual.play .nc-v-ring-fg {
-  animation: nc-v-ringfill 0.9s var(--ease-signature) 0.1s forwards;
-}
-.nc-proc-visual.play .nc-v-ring-check {
-  animation: nc-v-draw2 0.4s ease-out 0.8s forwards;
-}
-.nc-proc-visual.play .nc-v-done-label {
-  animation: nc-v-slidein 0.4s var(--ease-signature) 1s forwards;
-}
-@keyframes nc-v-ringfill {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-@keyframes nc-v-draw2 {
-  to {
-    stroke-dashoffset: 0;
-  }
+.nc-v-orbit svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1437,16 +1389,6 @@ body {
   .nc-proc-card {
     height: auto !important;
   }
-  /* Visuels : état final visible sans animation. */
-  .nc-proc-visual .nc-v-done-label {
-    opacity: 1;
-    transform: none;
-  }
-  .nc-proc-visual .nc-v-ring-fg,
-  .nc-proc-visual .nc-v-ring-check {
-    stroke-dashoffset: 0;
-  }
-
   /* Carte 1 : iMessage figé (bulles + 👍 visibles), Meet masquée */
   .nc-anim-imessage,
   .nc-anim-bubble-in,

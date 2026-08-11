@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Reveal from "@/components/ui/Reveal";
 import AuditNetwork from "@/components/sections/AuditNetwork";
 import NotionBuild from "@/components/sections/NotionBuild";
+import TeamOrbit from "@/components/sections/TeamOrbit";
 import { howItWorks } from "@/lib/content";
 
 /**
@@ -260,21 +261,8 @@ function StepVisual({ step }: { step: number }) {
   if (step === 2) {
     return <NotionBuild />;
   }
-  return (
-    <div className="nc-v-done">
-      <svg className="nc-v-ring" viewBox="0 0 120 120" aria-hidden>
-        <circle className="nc-v-ring-bg" cx="60" cy="60" r="50" />
-        <circle className="nc-v-ring-fg" cx="60" cy="60" r="50" />
-        <path
-          className="nc-v-ring-check"
-          d="M40 62l14 14 28-30"
-          fill="none"
-          strokeWidth="7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <span className="nc-v-done-label">Équipe opérationnelle</span>
-    </div>
-  );
+  if (step === 3) {
+    return <TeamOrbit />;
+  }
+  return null;
 }
