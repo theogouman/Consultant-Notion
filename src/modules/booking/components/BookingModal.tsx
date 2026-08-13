@@ -76,7 +76,14 @@ export default function BookingModal({
       body.style.right = prev.right;
       body.style.width = prev.width;
       body.style.overflow = prev.overflow;
+      // Restaure la position d'origine SANS animation : `html` porte
+      // `scroll-behavior: smooth`, qui sinon anime le retour (remontée en haut
+      // puis re-scroll). On force un saut instantané le temps du scrollTo.
+      const html = document.documentElement;
+      const prevBehavior = html.style.scrollBehavior;
+      html.style.scrollBehavior = "auto";
       window.scrollTo(0, scrollY);
+      html.style.scrollBehavior = prevBehavior;
       document.removeEventListener("keydown", onKey);
     };
   }, [render, onClose]);
