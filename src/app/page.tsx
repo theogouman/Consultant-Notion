@@ -5,7 +5,6 @@ import ProofBar from "@/components/sections/ProofBar";
 import ProcessStack from "@/components/sections/ProcessStack";
 import CaseStudies from "@/components/sections/CaseStudies";
 import About from "@/components/sections/About";
-import Faq from "@/components/sections/Faq";
 import FinalCta from "@/components/sections/FinalCta";
 import Footer from "@/components/sections/Footer";
 
@@ -29,7 +28,6 @@ export default function Home() {
         <ProcessStack />
         <CaseStudies />
         <About />
-        <Faq />
         <FinalCta />
       </main>
       <Footer />

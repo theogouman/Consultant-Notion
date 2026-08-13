@@ -10,7 +10,7 @@ export const CTA_LABEL = "Faire le point sur mon organisation";
 
 export const hero = {
   title:
-    "Transformez votre désordre en une organisation claire avec un Notion",
+    "Transformez votre désordre en une organisation claire avec Notion",
   subtitle:
     "On supprime le chaos organisationnel des entreprises en centralisant & automatisant leurs processus dans une solution sur-mesure pour maximiser la productivité",
   cta: "Faire le point sur mon organisation",
@@ -22,20 +22,20 @@ export const howItWorks = {
   subtitle: "…On l’optimise en continue depuis 2022",
   steps: [
     {
-      title: "Appel de qualification.",
-      body: "20 minutes, gratuit. On regarde votre situation ensemble et je vous dis franchement si je peux vous apporter de la valeur. Si ce n’est pas le cas, je vous le dis.",
+      title: "Première étude.",
+      body: "On fait une rapide 1ᵉʳ point sur votre situation pour savoir si nous sommes en capacité de vous accompagner dans votre enjeu.",
     },
     {
       title: "Audit de votre organisation.",
-      body: "J’analyse en détail votre fonctionnement actuel — vos outils, vos process, votre Notion s’il en existe un — pour identifier ce qui doit être structuré, simplifié ou supprimé.",
+      body: "C'est à ce moment qu'on approfondit vos process actuels pour identifier comment Notion peut vous faire gagner le plus de temps.",
     },
     {
-      title: "Construction clé en main.",
-      body: "Je conçois et je livre votre espace Notion, taillé sur vos enjeux. Vous n’avez rien à bricoler : vous récupérez un système prêt à l’emploi.",
+      title: "Création du Notion sur-mesure.",
+      body: "On crée le Notion sur-mesure pour répondre à vos enjeux et on vous livre le système prêt à l'emploi.",
     },
     {
-      title: "Prise en main.",
-      body: "Une session avec vos équipes pour s’approprier la nouvelle organisation. Ce n’est pas une formation Notion — vos équipes connaissent déjà l’outil — c’est la prise en main de votre structure, pour que chacun sache où travailler dès le premier jour.",
+      title: "Formation & Itérations.",
+      body: "C'est la phase la plus importante pour que ce projet soit une réussite : on forme vos équipes pour qu'ils se l'approprient rapidement et nous itérons jusqu'à ce que ce Notion soit parfait.",
     },
   ],
 };
@@ -71,13 +71,13 @@ export const caseStudies = {
 };
 
 export const about = {
-  eyebrow: "Enchanté 👋",
-  name: "Théo Gouman",
-  // [À AFFINER] — bio 3–4 phrases, voix de Théo, angle « faire moins pour mieux faire ».
+  name: "Qui suis-je ?",
+  // Bio rendue avec des liens LinkedIn/YouTube intégrés dans la 2ᵉ phrase
+  // (cf. About.tsx). Le texte plein est conservé ici pour le SEO / repli.
   bio: [
-    "Je suis Théo Gouman, consultant Notion indépendant. Depuis 2022, j’ai accompagné plus de 100 entreprises à structurer leur organisation autour d’un principe simple : faire moins, pour faire mieux.",
-    "Mon travail ne commence pas par Notion, il commence par vos enjeux. Ce qui doit être suivi, décidé, partagé — et tout ce qui, au contraire, encombre plus qu’il n’aide. Je construis ensuite le système le plus simple qui y répond.",
-    "Le vrai test d’une organisation, ce n’est pas le jour de la livraison : c’est douze mois plus tard, quand l’équipe l’utilise encore.",
+    "Je suis Théo Gouman, consultant Notion multi-certifié.",
+    "Depuis 2022, je crée du contenu sur LinkedIn et YouTube au sujet de Notion.",
+    "C'est ce qui m'a amené à accompagner +100 TPE / PME à implémenter cet outil dans leur organisation pour qu'ils gagnent en efficacité.",
   ],
   // Badges de certification Notion (images dans public/images/Annexes).
   // `label` = intitulé exact de la certification, affiché en tooltip au survol.

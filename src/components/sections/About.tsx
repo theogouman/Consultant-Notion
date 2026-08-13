@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Section from "@/components/ui/Section";
 import Reveal from "@/components/ui/Reveal";
-import HandwriteText from "@/components/ui/HandwriteText";
 import { about } from "@/lib/content";
 
 const PHOTO = "/images/Annexes/theo-gouman-portrait.png";
@@ -51,18 +50,58 @@ export default function About() {
               entre la photo empilée au-dessus et le titre « Enchanté ». */}
           <div className="px-6 pb-10 pt-6 sm:py-12 sm:pl-6 sm:pr-12">
             <Reveal>
-              <HandwriteText
-                text={about.eyebrow}
-                className="mb-2 text-base sm:text-lg"
-              />
               <h2 className="nc-title text-3xl sm:text-4xl">{about.name}</h2>
             </Reveal>
-            <div className="mt-6 space-y-4">
-              {about.bio.map((p, i) => (
-                <Reveal key={i} delay={i * 60}>
-                  <p className="text-[1.0625rem] leading-relaxed text-muted">{p}</p>
-                </Reveal>
-              ))}
+            <div className="mt-6 space-y-4 text-[1.0625rem] leading-relaxed text-muted">
+              <Reveal>
+                <p>Je suis Théo Gouman, consultant Notion multi-certifié.</p>
+              </Reveal>
+              <Reveal delay={60}>
+                <p>
+                  Depuis 2022, je crée du contenu sur{" "}
+                  <a
+                    href="https://www.linkedin.com/in/theogouman/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group whitespace-nowrap font-medium text-ink transition-colors hover:text-accent"
+                  >
+                    <span className="underline decoration-accent/50 underline-offset-2 group-hover:decoration-accent">
+                      LinkedIn
+                    </span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/images/Annexes/linkedin-dark.svg"
+                      alt=""
+                      className="ml-1 inline-block h-[0.95em] w-[0.95em] align-[-0.15em]"
+                    />
+                  </a>{" "}
+                  et{" "}
+                  <a
+                    href="https://www.youtube.com/@ThéoGouman?sub_confirmation=1"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group whitespace-nowrap font-medium text-ink transition-colors hover:text-accent"
+                  >
+                    <span className="underline decoration-accent/50 underline-offset-2 group-hover:decoration-accent">
+                      YouTube
+                    </span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/images/Annexes/youtube-icon.svg"
+                      alt=""
+                      className="ml-1 inline-block h-[0.95em] w-[0.95em] align-[-0.15em]"
+                    />
+                  </a>{" "}
+                  au sujet de Notion.
+                </p>
+              </Reveal>
+              <Reveal delay={120}>
+                <p>
+                  C&apos;est ce qui m&apos;a amené à accompagner +100 TPE / PME à
+                  implémenter cet outil dans leur organisation pour qu&apos;ils
+                  gagnent en efficacité.
+                </p>
+              </Reveal>
             </div>
 
             {about.certifications.length > 0 && (

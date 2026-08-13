@@ -101,6 +101,7 @@ export default function TeamOrbit() {
     if (!svg) return;
 
     const grp = (id: string) => root.querySelector<SVGGElement>("#" + id)!;
+    const gStage = grp("stage");
     const gLinks = grp("links");
     const gPulses = grp("pulses");
     const gNotion = grp("notion");
@@ -251,6 +252,11 @@ export default function TeamOrbit() {
       const glide = smooth(clamp((p - 0.44) / 0.15)); // pyramide -> orbite (plus tôt)
       const spin = p * 2 * PI * 0.9;
 
+      // Une fois Théo parti, tout le groupe (Notion + avatars) remonte pour se
+      // centrer verticalement dans la carte : viewBox 108 30 244 250 → centre
+      // y = 155 ; NC y = 182 → décalage de -27 px, suivant l'entrée en orbite.
+      gStage.setAttribute("transform", `translate(0, ${(-27 * glide).toFixed(1)})`);
+
       const theoY = lerp(THEO[1], THEO[1] - 30, leave);
       const theoOp = (1 - leave) * theoApp * (1 - outA);
       sa(gGuide, "transform", "translate(" + THEO[0] + "," + theoY.toFixed(1) + ")");
@@ -355,11 +361,13 @@ export default function TeamOrbit() {
             <circle cx="0" cy="0" r="30" />
           </clipPath>
         </defs>
-        <g id="links" />
-        <g id="pulses" />
-        <g id="notion" />
-        <g id="team" />
-        <g id="guide" />
+        <g id="stage">
+          <g id="links" />
+          <g id="pulses" />
+          <g id="notion" />
+          <g id="team" />
+          <g id="guide" />
+        </g>
       </svg>
     </div>
   );

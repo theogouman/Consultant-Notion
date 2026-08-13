@@ -9,7 +9,7 @@ export default function Hero() {
       <div className="mx-auto max-w-3xl text-center">
         <Reveal>
           <h1 className="nc-title nc-balance-wide text-4xl sm:text-5xl md:text-6xl">
-            Transformez votre désordre en une organisation claire avec un{" "}
+            Transformez votre désordre en une organisation claire avec{" "}
             <span className="whitespace-nowrap">
               Notion
               {/* Logo Notion intégré à la phrase, juste après le mot. */}

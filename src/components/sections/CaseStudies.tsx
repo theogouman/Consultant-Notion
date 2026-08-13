@@ -21,23 +21,6 @@ export default async function CaseStudies() {
       </Reveal>
 
       <CaseStudiesGrid caseStudies={items} />
-
-      {/* Témoignages courts — [À AFFINER] verbatims. */}
-      <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {copy.testimonials.map((t, i) => (
-          <Reveal key={i} delay={(i % 3) * 70}>
-            <figure className="flex h-full flex-col rounded-md border border-line bg-card p-6 nc-shadow-3">
-              <blockquote className="flex-1 text-[1.0625rem] leading-relaxed text-ink">
-                « {t.quote} »
-              </blockquote>
-              <figcaption className="mt-5 text-sm text-muted">
-                <span className="font-medium text-ink">{t.name}</span> — {t.role},{" "}
-                {t.company}
-              </figcaption>
-            </figure>
-          </Reveal>
-        ))}
-      </div>
     </Section>
   );
 }
