@@ -30,7 +30,10 @@ export default function Hero() {
           </p>
         </Reveal>
         <Reveal delay={180}>
-          <div className="mt-9 flex flex-col items-center gap-4">
+          <div
+            id="hero-cta"
+            className="mt-9 flex flex-col items-center gap-4"
+          >
             <CtaButton>
               {hero.cta}
               <span aria-hidden>→</span>

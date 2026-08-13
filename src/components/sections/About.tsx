@@ -42,7 +42,10 @@ export default function About() {
               aria-hidden
               fill
               sizes="340px"
-              className="object-contain object-bottom pl-10 pr-2"
+              /* pt-14 : marge en haut (padding sur l'image `fill`, pas sur le
+                 conteneur qui serait ignoré) pour que la photo ne touche pas le
+                 haut de l'encadré. object-bottom garde la photo collée en bas. */
+              className="object-contain object-bottom pl-10 pr-2 pt-14"
             />
           </div>
 
@@ -98,7 +101,7 @@ export default function About() {
               <Reveal delay={120}>
                 <p>
                   C&apos;est ce qui m&apos;a amené à accompagner +100 TPE / PME à
-                  implémenter cet outil dans leur organisation pour qu&apos;ils
+                  implémenter cet outil dans leur organisation pour qu&apos;elles
                   gagnent en efficacité.
                 </p>
               </Reveal>

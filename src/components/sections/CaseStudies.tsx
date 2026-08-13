@@ -13,7 +13,7 @@ export default async function CaseStudies() {
   const items = await getCaseStudiesWithBody();
 
   return (
-    <Section id="etudes-de-cas" width="wide">
+    <Section id="etudes-de-cas" width="wide" className="!pt-10 sm:!pt-14">
       <Reveal className="mb-10 max-w-2xl">
         <h2 className="nc-title whitespace-pre-line text-3xl sm:text-4xl">
           {copy.title}

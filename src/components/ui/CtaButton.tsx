@@ -26,7 +26,7 @@ export default function CtaButton({
       : "border border-line bg-card text-ink hover:border-accent hover:text-accent";
 
   return (
-    <button type="button" onClick={open} className={`${base} ${styles}`}>
+    <button type="button" onClick={open} className={`${base} ${styles} ${className}`}>
       {children}
     </button>
   );

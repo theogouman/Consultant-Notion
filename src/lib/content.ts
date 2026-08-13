@@ -19,11 +19,11 @@ export const hero = {
 export const howItWorks = {
   eyebrow: "Comment ça se passe",
   title: "Notre méthode en 4 étapes",
-  subtitle: "…On l’optimise en continue depuis 2022",
+  subtitle: "…On l’optimise en continu depuis 2022",
   steps: [
     {
       title: "Première étude.",
-      body: "On fait une rapide 1ᵉʳ point sur votre situation pour savoir si nous sommes en capacité de vous accompagner dans votre enjeu.",
+      body: "On fait un rapide premier point sur votre situation pour savoir si nous sommes en capacité de vous accompagner dans votre enjeu.",
     },
     {
       title: "Audit de votre organisation.",
@@ -35,7 +35,7 @@ export const howItWorks = {
     },
     {
       title: "Formation & Itérations.",
-      body: "C'est la phase la plus importante pour que ce projet soit une réussite : on forme vos équipes pour qu'ils se l'approprient rapidement et nous itérons jusqu'à ce que ce Notion soit parfait.",
+      body: "C'est la phase la plus importante pour que ce projet soit une réussite : on forme vos équipes pour qu'elles se l'approprient rapidement et nous itérons jusqu'à ce que ce Notion soit parfait.",
     },
   ],
 };
@@ -77,7 +77,7 @@ export const about = {
   bio: [
     "Je suis Théo Gouman, consultant Notion multi-certifié.",
     "Depuis 2022, je crée du contenu sur LinkedIn et YouTube au sujet de Notion.",
-    "C'est ce qui m'a amené à accompagner +100 TPE / PME à implémenter cet outil dans leur organisation pour qu'ils gagnent en efficacité.",
+    "C'est ce qui m'a amené à accompagner +100 TPE / PME à implémenter cet outil dans leur organisation pour qu'elles gagnent en efficacité.",
   ],
   // Badges de certification Notion (images dans public/images/Annexes).
   // `label` = intitulé exact de la certification, affiché en tooltip au survol.
