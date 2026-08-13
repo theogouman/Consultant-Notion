@@ -42,22 +42,40 @@ export default function ProcessStack() {
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const playVisual = (idx: number) => {
+    // Une carte n'anime QUE si elle est la carte active ET que la section est
+    // visible à l'écran. `currentActive` = index de la carte de tête ;
+    // `inView` = la pile est dans le viewport (IntersectionObserver).
+    let currentActive = -1;
+    let inView = false;
+
+    const setStates = () => {
       cards.forEach((c, i) => {
-        c.classList.toggle("is-active", i === idx);
+        c.classList.toggle("is-active", i === currentActive);
         const v = c.querySelector<HTMLElement>(".nc-proc-visual");
         if (v)
           v.style.setProperty(
             "--nc-anim-state",
-            i === idx ? "running" : "paused",
+            i === currentActive && inView ? "running" : "paused",
           );
       });
-      const vis = cards[idx]?.querySelector<HTMLElement>(".nc-proc-visual");
-      if (vis) {
-        vis.classList.remove("play");
-        void vis.offsetWidth; // reflow → rejoue l'animation
-        vis.classList.add("play");
-      }
+    };
+    // Redémarre l'animation de la carte active DEPUIS 0 : reflow pour les
+    // animations CSS (carte 1) ; les visuels rAF (cartes 2/3/4) repartent de 0
+    // en détectant la transition paused→running.
+    const restartActive = () => {
+      if (!inView || currentActive < 0) return;
+      const vis =
+        cards[currentActive]?.querySelector<HTMLElement>(".nc-proc-visual");
+      if (!vis) return;
+      vis.classList.remove("play");
+      void vis.offsetWidth; // reflow
+      vis.classList.add("play");
+    };
+    const activate = (idx: number) => {
+      const changed = idx !== currentActive;
+      currentActive = idx;
+      setStates();
+      if (changed) restartActive();
     };
 
     if (reduce || segments <= 0) {
@@ -95,9 +113,24 @@ export default function ProcessStack() {
       card.style.visibility = "hidden";
     });
 
+    // La section devient (in)visible : (re)démarre ou gèle les animations.
+    const io = new IntersectionObserver(
+      (entries) => {
+        const vis = entries[0].isIntersecting;
+        if (vis === inView) return;
+        inView = vis;
+        setStates();
+        if (inView) restartActive();
+      },
+      // Bande centrale du viewport (~30%) : la carte n'anime que lorsque la
+      // section occupe le centre de l'écran (pile épinglée), pas dès qu'un
+      // liseré apparaît en bas du 1er écran — évite tout play en arrière-plan.
+      { threshold: 0, rootMargin: "-35% 0px -35% 0px" },
+    );
+    io.observe(sticky);
+
     const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
     const landStep = 12;
-    let prevActive = -1;
     let ticking = false;
 
     const onScroll = () => {
@@ -121,10 +154,7 @@ export default function ProcessStack() {
           );
           if (local > 0) topCard = i + 1;
         }
-        if (topCard !== prevActive) {
-          playVisual(topCard);
-          prevActive = topCard;
-        }
+        if (topCard !== currentActive) activate(topCard);
 
         for (let i = 0; i < segments; i++) {
           const card = stackCards[i];
@@ -151,6 +181,7 @@ export default function ProcessStack() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       window.clearTimeout(resizeT);
+      io.disconnect();
     };
   }, []);
 

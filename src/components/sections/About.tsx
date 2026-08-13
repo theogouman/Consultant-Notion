@@ -66,11 +66,9 @@ export default function About() {
                     href="https://www.linkedin.com/in/theogouman/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group whitespace-nowrap font-medium text-ink transition-colors hover:text-accent"
+                    className="whitespace-nowrap font-medium text-ink transition-colors hover:text-accent"
                   >
-                    <span className="underline decoration-accent/50 underline-offset-2 group-hover:decoration-accent">
-                      LinkedIn
-                    </span>
+                    LinkedIn
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="/images/Annexes/linkedin-dark.svg"
@@ -83,11 +81,9 @@ export default function About() {
                     href="https://www.youtube.com/@ThéoGouman?sub_confirmation=1"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group whitespace-nowrap font-medium text-ink transition-colors hover:text-accent"
+                    className="whitespace-nowrap font-medium text-ink transition-colors hover:text-accent"
                   >
-                    <span className="underline decoration-accent/50 underline-offset-2 group-hover:decoration-accent">
-                      YouTube
-                    </span>
+                    YouTube
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="/images/Annexes/youtube-icon.svg"

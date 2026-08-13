@@ -86,6 +86,10 @@ export default function ResourceMorphOverlay() {
       if (backdrop) backdrop.style.opacity = "1";
       if (clone) clone.style.opacity = "0";
       if (flyImg) flyImg.style.opacity = "0";
+      // Libère les couches de compositing une fois le morph terminé.
+      panel.style.willChange = "";
+      if (clone) clone.style.willChange = "";
+      if (backdrop) backdrop.style.willChange = "";
     };
 
     if (prefersReducedMotion()) {
@@ -126,6 +130,11 @@ export default function ResourceMorphOverlay() {
     panel.style.transformOrigin = "top left";
     panel.style.transform = `translate(${tx}px, ${ty}px) scale(${sx}, ${sy})`;
     panel.style.borderRadius = foldedRadius;
+    // Promeut le panneau (et le titre voyageur) en couche de compositing : le
+    // scale + border-radius ne re-rastérisent plus le contenu à chaque frame →
+    // mouvement fluide au lieu de saccadé.
+    panel.style.willChange = "transform, border-radius";
+    if (backdrop) backdrop.style.willChange = "opacity";
     if (panelImg) panelImg.style.opacity = "0"; // masque la vraie couverture
     if (title) title.style.opacity = "0";
     if (body) body.style.opacity = "0";
@@ -165,6 +174,7 @@ export default function ResourceMorphOverlay() {
       }px) scale(${scale})`;
       clone.style.transform = cloneFrom;
       clone.style.opacity = "1";
+      clone.style.willChange = "transform";
     }
 
     // --- 3) JOUER LES ANIMATIONS (2 rAF pour garantir l'état initial) ---
@@ -289,6 +299,10 @@ export default function ResourceMorphOverlay() {
 
     setClosing(true);
 
+    // Promeut les éléments animés en couche de compositing (mouvement fluide).
+    panel.style.willChange = "transform, border-radius";
+    if (backdrop) backdrop.style.willChange = "opacity";
+
     // Image volante : part de la couverture du panneau vers la carte.
     if (flyImg && imageRect && panelImgRect) {
       if (panelImg) panelImg.style.opacity = "0";
@@ -333,6 +347,7 @@ export default function ResourceMorphOverlay() {
       clone.style.top = `${titleFinalRect.top}px`;
       clone.style.width = `${titleFinalRect.width}px`;
       clone.style.opacity = "1";
+      clone.style.willChange = "transform";
       title.style.opacity = "0";
       clone.animate(
         [
@@ -373,6 +388,9 @@ export default function ResourceMorphOverlay() {
       SPRING,
     );
     pAnim.onfinish = () => {
+      panel.style.willChange = "";
+      if (clone) clone.style.willChange = "";
+      if (backdrop) backdrop.style.willChange = "";
       setClosing(false);
       close();
     };

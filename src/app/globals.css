@@ -940,12 +940,11 @@ body {
 /* ── Visuel 2 : réseau d'audit (composant AuditNetwork) ───────────────────── */
 /* Alias des variables de couleur pour le composant (qui lit --accent /
    --accent-strong ; elles cascadent dans le SVG). */
+/* Remplit le volet ; le SVG (preserveAspectRatio meet) tient toujours en entier
+   → jamais rogné, centré, aussi grand que possible. */
 .nc-v-net {
   width: 100%;
-  max-width: 440px;
-  /* Occupe mieux la carte : ratio de la viewBox (400×300), borné en hauteur. */
-  aspect-ratio: 4 / 3;
-  max-height: 100%;
+  height: 100%;
   --accent: var(--color-accent);
   --accent-strong: var(--color-accent-strong);
 }
@@ -953,7 +952,6 @@ body {
   display: block;
   width: 100%;
   height: 100%;
-  overflow: visible;
 }
 
 /* ── Visuel 3 : fenêtre Notion dark (composant NotionBuild) ───────────────── */
@@ -1379,19 +1377,16 @@ body {
 }
 
 /* ── Visuel 4 : pyramide → orbite (composant TeamOrbit) ───────────────────── */
+/* Remplit le volet ; le SVG (preserveAspectRatio meet) tient TOUJOURS en entier
+   à l'intérieur → jamais rogné, centré, et aussi grand que possible. */
 .nc-v-orbit {
   width: 100%;
-  max-width: 440px;
-  /* viewBox recadrée (108 30 244 250) → occupe mieux la carte, borné en hauteur
-     pour ne pas déborder sur un volet court. */
-  aspect-ratio: 244 / 250;
-  max-height: 100%;
+  height: 100%;
 }
 .nc-v-orbit svg {
   display: block;
   width: 100%;
   height: 100%;
-  overflow: visible;
 }
 
 @media (prefers-reduced-motion: reduce) {

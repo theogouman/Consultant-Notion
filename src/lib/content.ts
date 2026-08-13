@@ -131,7 +131,7 @@ export const finalCta = {
   bookingHeading: {
     title: "Faisons un point sur votre organisation",
     subtitle:
-      "1h pour faire un audit de votre organisation et déterminer si Notion est pertinent pour vous (ou pas)",
+      "1h pour faire un audit de votre organisation et déterminer si Notion est pertinent pour vous",
   },
 };
 

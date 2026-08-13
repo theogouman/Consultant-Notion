@@ -310,12 +310,16 @@ export default function NotionBuild() {
     let raf = 0;
     let elapsed = 0;
     let last = performance.now();
+    let prev = "paused";
     const tick = (now: number) => {
       const dt = now - last;
       last = now;
       const state = visual
         ? getComputedStyle(visual).getPropertyValue("--nc-anim-state").trim()
         : "running";
+      // La carte (re)devient active → l'animation repart de 0.
+      if (state === "running" && prev !== "running") elapsed = 0;
+      prev = state;
       if (state !== "paused") elapsed += dt;
       draw((elapsed % LOOP) / LOOP);
       raf = requestAnimationFrame(tick);

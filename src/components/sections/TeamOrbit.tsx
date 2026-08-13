@@ -252,10 +252,14 @@ export default function TeamOrbit() {
       const glide = smooth(clamp((p - 0.44) / 0.15)); // pyramide -> orbite (plus tôt)
       const spin = p * 2 * PI * 0.9;
 
-      // Une fois Théo parti, tout le groupe (Notion + avatars) remonte pour se
-      // centrer verticalement dans la carte : viewBox 108 30 244 250 → centre
-      // y = 155 ; NC y = 182 → décalage de -27 px, suivant l'entrée en orbite.
-      gStage.setAttribute("transform", `translate(0, ${(-27 * glide).toFixed(1)})`);
+      // Centrage vertical du contenu VISIBLE dans tous les cas (viewBox
+      // 108 30 244 250 → centre y = 155) : la pyramide (Théo 36 → Notion 212,
+      // centre ~124) est décalée de +31 ; l'orbite (centre NC y = 182) de −27.
+      // Interpolation selon `glide` → toujours centré, pyramide comme orbite.
+      gStage.setAttribute(
+        "transform",
+        `translate(0, ${(31 - 58 * glide).toFixed(1)})`,
+      );
 
       const theoY = lerp(THEO[1], THEO[1] - 30, leave);
       const theoOp = (1 - leave) * theoApp * (1 - outA);
@@ -336,12 +340,16 @@ export default function TeamOrbit() {
     let raf = 0;
     let elapsed = 0;
     let last = performance.now();
+    let prev = "paused";
     const tick = (now: number) => {
       const dt = now - last;
       last = now;
       const st = visual
         ? getComputedStyle(visual).getPropertyValue("--nc-anim-state").trim()
         : "running";
+      // La carte (re)devient active → l'animation repart de 0.
+      if (st === "running" && prev !== "running") elapsed = 0;
+      prev = st;
       if (st !== "paused") elapsed += dt;
       draw((elapsed % LOOP) / LOOP);
       raf = requestAnimationFrame(tick);
