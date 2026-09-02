@@ -27,6 +27,7 @@ import {
   sendCancellation,
   sendPendingManualAlert,
 } from "./resend";
+import { syncBookingToCrm } from "./crm";
 import { generateIdempotencyKey } from "../lib/tokens";
 import { splitGuestEmails } from "../lib/validation";
 import { eventSummary, eventDescriptionHtml } from "./event-content";
@@ -97,6 +98,8 @@ export async function createBooking(
 
     // e. Mails de confirmation + notification interne EN ARRIÈRE-PLAN : le lead
     //    arrive sur l'écran de confirmation sans attendre Resend.
+    //    Le CRM Notion (canal d'acquisition) part dans le même lot : il est
+    //    best-effort et ne doit jamais peser sur la confirmation.
     const confirmed = booking;
     after(async () => {
       try {
@@ -104,6 +107,7 @@ export async function createBooking(
       } catch (mailErr) {
         console.error("[booking] Échec e-mail confirmation:", mailErr);
       }
+      await syncBookingToCrm(confirmed);
     });
     return { status: "confirmed", booking };
   } catch (err) {
@@ -118,6 +122,8 @@ export async function createBooking(
       } catch (mailErr) {
         console.error("[booking] Échec alerte pending_manual:", mailErr);
       }
+      // Le lead existe en base même sans event Google : il a sa place au CRM.
+      await syncBookingToCrm(pending);
     });
     return { status: "pending_manual", booking };
   }

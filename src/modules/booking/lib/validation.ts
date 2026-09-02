@@ -3,6 +3,7 @@
  * Renvoie soit { ok: true, value } soit { ok: false, error }.
  */
 
+import { sanitizeAcquisitionParam } from "./acquisition";
 import type { QualificationInput, Situation } from "../types";
 
 export type Validated<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -77,6 +78,10 @@ export function validateQualification(
       situation,
       motivation,
       guestEmails,
+      // Attribution : jamais bloquante — une valeur aberrante est normalisée
+      // (ou ignorée), elle ne fait pas échouer la réservation.
+      acquisitionSource: sanitizeAcquisitionParam(input.acquisitionSource),
+      acquisitionPost: sanitizeAcquisitionParam(input.acquisitionPost),
     },
   };
 }

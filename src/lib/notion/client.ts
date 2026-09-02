@@ -73,10 +73,15 @@ async function notionFetch(
   }
 }
 
-/** Récupère toutes les pages d'une base (pagination automatique). */
+/**
+ * Récupère toutes les pages d'une base (pagination automatique).
+ * `noStore` court-circuite le cache ISR : indispensable pour les lectures
+ * transactionnelles (recherche d'une fiche CRM au moment d'une réservation).
+ */
 export async function queryDatabaseAll(
   databaseId: string,
   body: Record<string, unknown> = {},
+  opts?: { noStore?: boolean },
 ): Promise<any[]> {
   const id = normalizeNotionId(databaseId);
   const results: any[] = [];
@@ -85,6 +90,7 @@ export async function queryDatabaseAll(
   do {
     const data = await notionFetch(`/databases/${id}/query`, {
       method: "POST",
+      ...(opts?.noStore ? { cache: "no-store" as const } : {}),
       body: JSON.stringify({
         ...body,
         ...(cursor ? { start_cursor: cursor } : {}),
@@ -142,6 +148,42 @@ export async function retrievePage(
 }
 
 /* ------------------------------------------------------------------ */
+/* Écriture (CRM)                                                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Crée une page dans une base (POST /pages). Renvoie la page créée, ou `null`
+ * si l'appel échoue (token absent, base non partagée avec l'intégration,
+ * propriété inconnue...). Les appelants traitent l'écriture en best-effort :
+ * un CRM indisponible ne doit jamais faire échouer un parcours utilisateur.
+ */
+export async function createPage(
+  databaseId: string,
+  properties: Record<string, any>,
+): Promise<any | null> {
+  return notionFetch("/pages", {
+    method: "POST",
+    cache: "no-store",
+    body: JSON.stringify({
+      parent: { database_id: normalizeNotionId(databaseId) },
+      properties,
+    }),
+  });
+}
+
+/** Met à jour les propriétés d'une page (PATCH /pages/{id}). Best-effort. */
+export async function updatePage(
+  pageId: string,
+  properties: Record<string, any>,
+): Promise<any | null> {
+  return notionFetch(`/pages/${normalizeNotionId(pageId)}`, {
+    method: "PATCH",
+    cache: "no-store",
+    body: JSON.stringify({ properties }),
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /* Helpers de lecture de propriétés                                    */
 /* ------------------------------------------------------------------ */
 
@@ -157,6 +199,13 @@ export function getMultiSelect(properties: any, name: string): string[] {
   const prop = properties?.[name];
   if (!prop || prop.type !== "multi_select") return [];
   return (prop.multi_select || []).map((o: any) => o.name);
+}
+
+/** Extrait le texte d'une propriété `rich_text`. */
+export function getRichText(properties: any, name: string): string {
+  const prop = properties?.[name];
+  if (!prop || prop.type !== "rich_text") return "";
+  return (prop.rich_text || []).map((t: any) => t.plain_text).join("").trim();
 }
 
 /** Extrait la première URL d'une propriété `files`. */

@@ -18,6 +18,7 @@ import {
   googleCalendarUrl,
   outlookCalendarUrl,
 } from "./links";
+import { formatAcquisitionChannel } from "../lib/acquisition";
 import { summarizeCancelFeedback } from "../lib/cancel";
 import type { Booking, CancelFeedback } from "../types";
 
@@ -207,6 +208,9 @@ PS : YouTube ${YOUTUBE_URL} · LinkedIn ${LINKEDIN_URL} · Études de cas ${CASE
 /* -------------------------------------------------------------------------- */
 export function internalNotificationEmail(booking: Booking): EmailContent {
   const situation = SITUATION_LABEL[booking.situation] ?? booking.situation;
+  const channel =
+    formatAcquisitionChannel({ source: booking.acq_source, post: booking.acq_post }) ||
+    "—";
   const rows = [
     ["Nom", booking.lead_name],
     ["E-mail", booking.lead_email],
@@ -215,6 +219,7 @@ export function internalNotificationEmail(booking: Booking): EmailContent {
     ["Activité", booking.activity],
     ["Situation", situation],
     ["Motivation", booking.motivation],
+    ["Canal d'acquisition", channel],
     ["Meet", booking.meet_url ?? "—"],
   ]
     .map(
@@ -237,6 +242,7 @@ Créneau : ${slotLine(booking)}
 Activité : ${booking.activity}
 Situation : ${situation}
 Motivation : ${booking.motivation}
+Canal d'acquisition : ${channel}
 Meet : ${booking.meet_url ?? "—"}`;
 
   return { subject: `Nouvelle résa — ${booking.lead_name}`, html, text };

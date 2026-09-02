@@ -8,6 +8,7 @@ import QualificationForm, {
 } from "./QualificationForm";
 import ResizeAnimator from "./ResizeAnimator";
 import { formatSlotLong, formatSlotBanner, timezoneParts } from "../lib/timezone";
+import { captureAcquisitionFromUrl, getAcquisition } from "../lib/acquisition";
 import {
   getAvailabilityAction,
   createBookingAction,
@@ -81,6 +82,10 @@ export default function BookingFlow({
   }, []);
 
   useEffect(() => {
+    // Filet de sécurité : le booker embarqué peut vivre hors du provider, qui
+    // capture normalement `?source=` / `?post=` au chargement de la page.
+    captureAcquisitionFromUrl();
+
     const detected =
       typeof Intl !== "undefined"
         ? Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris"
@@ -105,6 +110,7 @@ export default function BookingFlow({
     setSubmitting(true);
     setServerError(null);
     try {
+      const acquisition = getAcquisition();
       const res = await createBookingAction({
         name: formValues.name.trim(),
         email: formValues.email.trim(),
@@ -115,6 +121,8 @@ export default function BookingFlow({
         company: honeypotRef.current?.value || "",
         startUtc: slot.start_utc,
         leadTimezone,
+        acquisitionSource: acquisition.source,
+        acquisitionPost: acquisition.post,
       });
       if (res.ok) {
         setResult(res);

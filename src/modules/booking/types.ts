@@ -55,6 +55,10 @@ export interface Booking {
   google_event_id: string | null;
   meet_url: string | null;
   manage_token: string;
+  /** Attribution : `?source=` de l'URL d'arrivée (null si absent). */
+  acq_source: string | null;
+  /** Attribution : `?post=` de l'URL d'arrivée (null si absent). */
+  acq_post: string | null;
   ics_sequence: number;
   reminder_sent_at: string | null;
   created_at: string;
@@ -117,4 +121,8 @@ export interface QualificationInput {
   guestEmails?: string[];
   /** Honeypot anti-bot : doit rester vide. */
   company?: string;
+  /** Attribution — paramètre d'URL `source` (ex. `linkedin`). */
+  acquisitionSource?: string | null;
+  /** Attribution — paramètre d'URL `post` (ex. `carrousel-notion-crm`). */
+  acquisitionPost?: string | null;
 }

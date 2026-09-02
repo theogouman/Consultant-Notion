@@ -21,6 +21,7 @@ npm run dev                  # http://localhost:3000
 | --- | --- | --- |
 | `NOTION_API_TOKEN` | **serveur, secret** | Token de l'intégration Notion. Jamais exposé au client, jamais committé. |
 | `NOTION_CASE_STUDIES_DATABASE_ID` | serveur | ID de la base études de cas (défaut : `a9a77a8e49af4c83bb6c3cfc67706b20`). |
+| `NOTION_CRM_DATABASE_ID` | serveur | ID de la base CRM alimentée à chaque réservation (défaut : `70703f6c7f4a45df865150c9f3ec8fb3`). |
 | `NEXT_PUBLIC_BASE_URL` | public | URL de base publique (liens manage + add-to-calendar des e-mails). |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | **serveur, secret** | App OAuth2 Google existante. |
 | `GOOGLE_REFRESH_TOKEN` | **serveur, secret** | Refresh token offline de Théo (app en statut Production). |
@@ -89,7 +90,7 @@ réutilisation.
 
 ```
 src/modules/booking/
-├── server/       # supabase · settings · google · availability · bookings · resend · ics · flow
+├── server/       # supabase · settings · google · availability · bookings · resend · ics · flow · crm
 ├── components/   # BookingFlow · SlotPicker · QualificationForm · ManageBooking
 ├── admin/        # SettingsForm · BookingsList
 ├── emails/       # templates (voix de Théo) · links
@@ -113,6 +114,41 @@ src/modules/booking/
    la purge RGPD (> 12 mois).
 
 Tests fuseaux (bascules d'heure incluses) : `npm test`.
+
+## Liens de campagne — `?l=1`, `?source=`, `?post=`
+
+Trois paramètres d'URL, lus au chargement de la landing (`BookingModalProvider`) :
+
+| Paramètre | Effet |
+| --- | --- |
+| `?l=1` | Ouvre directement le modal de réservation sur le calendrier — un clic de moins depuis un post, une bio ou une newsletter. |
+| `?source=` | D'où vient le clic (`linkedin`, `youtube`, `newsletter`…). |
+| `?post=` | Quelle publication précisément (`carrousel-notion-crm`, `video-12`…). |
+
+Exemple : `https://consultant-notion.fr/?l=1&source=linkedin&post=carrousel-notion-crm`.
+
+`source` et `post` sont normalisés (trim, 120 caractères max), mémorisés le
+temps de l'onglet (`sessionStorage`, premier contact gagnant) et enregistrés à
+la réservation dans `bookings.acq_source` / `bookings.acq_post`
+(migration `0004_acquisition_channel.sql`).
+
+À la confirmation, la valeur `source⎜post` part vers le CRM Notion
+(`server/crm.ts`) dans la propriété **Canal d'acquisition**, et apparaît dans
+la notification interne. Règles de format : les deux paramètres ->
+`source⎜post` ; un seul -> la valeur seule ; aucun -> propriété laissée vide.
+
+Côté CRM (base « CRM @Gouman ») :
+
+- fiche absente pour cet e-mail -> création (`Nom`, `E-mail`, `Job` = activité,
+  `État` = **Rdv Pris**, `Canal d'acquisition`) ;
+- fiche déjà présente -> on ne remplit que `Canal d'acquisition` s'il est vide
+  (l'attribution d'origine et l'`État` en cours ne sont jamais écrasés).
+
+L'écriture est **best-effort** et hors chemin critique (`after()`) : un CRM
+indisponible, un token absent ou une base non partagée avec l'intégration
+n'empêchent jamais une réservation. **Prérequis unique** : partager la base CRM
+avec l'intégration Notion (`⋯` → Connexions → l'intégration de
+`NOTION_API_TOKEN`), sinon l'API répond 404 et rien n'est écrit.
 
 ## Design system
 

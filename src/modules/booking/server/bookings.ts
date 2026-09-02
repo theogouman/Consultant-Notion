@@ -108,6 +108,8 @@ export async function insertConfirmedBooking(params: {
       motivation: params.input.motivation,
       status: "confirmed",
       manage_token,
+      acq_source: params.input.acquisitionSource ?? null,
+      acq_post: params.input.acquisitionPost ?? null,
     })
     .select("*")
     .single();
