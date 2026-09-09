@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 const SITE_URL = "https://consultant-notion.fr";
@@ -93,6 +94,14 @@ export default function RootLayout({
       <body>
         <div className="nc-app-bg" aria-hidden />
         {children}
+        {/* Analytics DataFast (respectueux de la vie privée). */}
+        <Script
+          defer
+          data-website-id="dfid_CPYv1TzNtdcylUGpRkwld"
+          data-domain="consultant-notion.fr"
+          src="https://datafa.st/js/script.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
