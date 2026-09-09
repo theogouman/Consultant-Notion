@@ -57,10 +57,12 @@ async function findByEmail(email: string): Promise<{ id: string; properties: unk
 }
 
 /**
- * Pousse la réservation dans le CRM. Ne lève jamais : renvoie simplement
- * `false` si rien n'a pu être écrit (token absent, base non partagée, API KO).
+ * Pousse la réservation dans le CRM (fiche lead) et renvoie l'ID de la page
+ * CRM (existante ou créée) — cet ID sert d'ancre à la note de réunion Notion
+ * (relation), gérée par `notion.ts`. Ne lève jamais : renvoie `null` si rien
+ * n'a pu être écrit/trouvé (token absent, base non partagée, API KO).
  */
-export async function syncBookingToCrm(booking: Booking): Promise<boolean> {
+export async function syncBookingToCrm(booking: Booking): Promise<string | null> {
   const channel = formatAcquisitionChannel({
     source: booking.acq_source,
     post: booking.acq_post,
@@ -71,13 +73,14 @@ export async function syncBookingToCrm(booking: Booking): Promise<boolean> {
 
     if (existing) {
       // Attribution déjà connue -> on n'y touche pas (premier contact gagnant).
+      // L'État n'est jamais régressé (un Client ne redevient pas « Rdv Pris »).
       const current = getRichText(existing.properties, PROP.channel);
-      if (!channel || current) return true;
-
-      const updated = await updatePage(existing.id, {
-        [PROP.channel]: { rich_text: [{ text: { content: channel } }] },
-      });
-      return Boolean(updated);
+      if (channel && !current) {
+        await updatePage(existing.id, {
+          [PROP.channel]: { rich_text: [{ text: { content: channel } }] },
+        });
+      }
+      return existing.id;
     }
 
     const created = await createPage(databaseId(), {
@@ -89,9 +92,9 @@ export async function syncBookingToCrm(booking: Booking): Promise<boolean> {
         ? { [PROP.channel]: { rich_text: [{ text: { content: channel } }] } }
         : {}),
     });
-    return Boolean(created);
+    return created?.id ?? null;
   } catch (err) {
     console.error("[crm] Synchronisation Notion échouée :", err);
-    return false;
+    return null;
   }
 }

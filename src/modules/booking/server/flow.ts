@@ -19,6 +19,7 @@ import {
   cancelBooking,
   getBookingById,
   insertCancellationFeedback,
+  setNotionSync,
 } from "./bookings";
 import { createEvent, updateEventTime, deleteEvent } from "./google";
 import {
@@ -28,6 +29,11 @@ import {
   sendPendingManualAlert,
 } from "./resend";
 import { syncBookingToCrm } from "./crm";
+import {
+  syncBookingConfirmed,
+  syncBookingCancelled,
+  syncBookingRescheduled,
+} from "./notion";
 import { generateIdempotencyKey } from "../lib/tokens";
 import { splitGuestEmails } from "../lib/validation";
 import { eventSummary, eventDescriptionHtml } from "./event-content";
@@ -107,7 +113,13 @@ export async function createBooking(
       } catch (mailErr) {
         console.error("[booking] Échec e-mail confirmation:", mailErr);
       }
-      await syncBookingToCrm(confirmed);
+      // 1) Fiche CRM (dédup e-mail + canal d'acquisition) -> renvoie son id.
+      // 2) Note de réunion reliée + onglet « Infos Formulaire » + commentaire.
+      const crmPageId = await syncBookingToCrm(confirmed);
+      if (crmPageId) {
+        await setNotionSync(confirmed.id, { crmPageId });
+        await syncBookingConfirmed(confirmed);
+      }
     });
     return { status: "confirmed", booking };
   } catch (err) {
@@ -123,7 +135,9 @@ export async function createBooking(
         console.error("[booking] Échec alerte pending_manual:", mailErr);
       }
       // Le lead existe en base même sans event Google : il a sa place au CRM.
-      await syncBookingToCrm(pending);
+      // (Pas de note de réunion tant que l'appel n'est pas confirmé.)
+      const crmPageId = await syncBookingToCrm(pending);
+      if (crmPageId) await setNotionSync(pending.id, { crmPageId });
     });
     return { status: "pending_manual", booking };
   }
@@ -175,6 +189,8 @@ export async function rescheduleExisting(
     } catch (err) {
       console.error("[booking] Échec e-mail reprogrammation:", err);
     }
+    // Sync Notion : met à jour la Date de la note de réunion (best-effort).
+    await syncBookingRescheduled(booking);
   });
 
   return { status: "confirmed", booking };
@@ -216,6 +232,20 @@ export async function cancelExisting(
     }
   }
 
-  await sendCancellation(booking, settings, feedback);
+  // Travail non bloquant (e-mail + sync Notion) exécuté APRÈS la réponse, chacun
+  // ISOLÉ : un échec d'e-mail ne doit ni empêcher l'archivage Notion, ni faire
+  // échouer l'annulation (l'event Google est déjà supprimé, la résa déjà marquée
+  // « cancelled »). Vaut aussi pour la branche « recontact dans X mois ».
+  after(async () => {
+    try {
+      await sendCancellation(booking, settings, feedback);
+    } catch (err) {
+      console.error("[booking] Échec e-mail annulation:", err);
+    }
+    // Sync Notion : archive la note de réunion, passe le CRM en « Annulé avant
+    // R1 », ajoute le commentaire motif, gère le recontact éventuel.
+    await syncBookingCancelled(booking, feedback);
+  });
+
   return { status: "cancelled", booking };
 }

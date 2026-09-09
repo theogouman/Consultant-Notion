@@ -275,3 +275,21 @@ export async function getBookingsToRemind(reminderHoursBefore: number): Promise<
 export async function markReminderSent(id: string): Promise<void> {
   await patchBooking(id, { reminder_sent_at: new Date().toISOString() });
 }
+
+/** Mémorise le résultat de la sync Notion (IDs des pages + suivi d'erreur). */
+export async function setNotionSync(
+  id: string,
+  patch: {
+    crmPageId?: string | null;
+    meetingPageId?: string | null;
+    error?: string | null;
+    syncedAt?: string | null;
+  },
+): Promise<Booking> {
+  const p: Partial<Booking> = {};
+  if (patch.crmPageId !== undefined) p.crm_page_id = patch.crmPageId;
+  if (patch.meetingPageId !== undefined) p.meeting_page_id = patch.meetingPageId;
+  if (patch.error !== undefined) p.notion_sync_error = patch.error;
+  if (patch.syncedAt !== undefined) p.notion_synced_at = patch.syncedAt;
+  return patchBooking(id, p);
+}

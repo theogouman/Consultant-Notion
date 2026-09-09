@@ -61,6 +61,11 @@ export interface Booking {
   acq_post: string | null;
   ics_sequence: number;
   reminder_sent_at: string | null;
+  /** Sync Notion (best-effort) : IDs des pages créées + suivi d'erreur. */
+  crm_page_id: string | null;
+  meeting_page_id: string | null;
+  notion_synced_at: string | null;
+  notion_sync_error: string | null;
   created_at: string;
   updated_at: string;
 }
