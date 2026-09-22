@@ -23,6 +23,7 @@ import "server-only";
 import { DateTime } from "../lib/timezone";
 import { manageUrl } from "../emails/links";
 import { TOOL_LABEL } from "../lib/cancel";
+import { formatAcquisitionChannel } from "../lib/acquisition";
 import { getBookingById, setNotionSync } from "./bookings";
 import type { Booking, CallbackDelay, CancelFeedback } from "../types";
 
@@ -37,6 +38,15 @@ const INFOS_TAB_TITLE = "Infos Formulaire";
 const ETAT_RDV_PRIS = "Rdv Pris";
 const ETAT_ANNULE = "Annulé avant R1";
 const TYPE_APPEL_VENTE = "Appel de Vente";
+
+/** Noms EXACTS des propriétés de la base CRM. */
+const CRM_PROP = {
+  name: "Nom",
+  email: "E-mail",
+  job: "Job",
+  status: "État",
+  channel: "Canal d'acquisition",
+} as const;
 
 /** Délai de rappel -> nombre de mois (recontact après annulation). */
 const CALLBACK_MONTHS: Record<CallbackDelay, number> = { "1m": 1, "3m": 3, "6m": 6 };
@@ -114,6 +124,8 @@ async function notionFetch(
 
 interface ResolvedSchema {
   meetingTemplateId: string;
+  /** La base CRM a-t-elle une propriété « Canal d'acquisition » (rich_text) ? */
+  crmHasChannel: boolean;
 }
 let schemaCache: ResolvedSchema | null = null;
 
@@ -207,9 +219,10 @@ async function ensureSchema(env: NotionEnv): Promise<ResolvedSchema> {
     throw new Error(`Schéma Notion incompatible :\n- ${missing.join("\n- ")}`);
   }
 
-  // La fiche CRM est créée/dédupliquée par crm.ts (canal d'acquisition, État
-  // non régressé). Ici on ne crée que la note de réunion -> seul le template
-  // « R1 » est résolu.
+  // « Canal d'acquisition » est optionnel : présent -> on l'alimente ; absent
+  // -> on ne bloque pas (on saute juste l'écriture du canal).
+  const crmHasChannel = crm[CRM_PROP.channel]?.type === "rich_text";
+
   const meetingTemplateId = await resolveTemplateId(
     env,
     env.meetingsDataSourceId,
@@ -218,7 +231,7 @@ async function ensureSchema(env: NotionEnv): Promise<ResolvedSchema> {
     "Réunions (template « R1 »)",
   );
 
-  schemaCache = { meetingTemplateId };
+  schemaCache = { meetingTemplateId, crmHasChannel };
   return schemaCache;
 }
 
@@ -378,6 +391,81 @@ async function createFromTemplate(
   return page.id;
 }
 
+/** Crée une page « nue » (sans template) dans une data source. */
+async function createPlainPage(
+  env: NotionEnv,
+  dataSourceId: string,
+  properties: Record<string, unknown>,
+): Promise<string> {
+  const page = (await notionFetch(env.token, `/pages`, {
+    method: "POST",
+    body: JSON.stringify({
+      parent: { type: "data_source_id", data_source_id: dataSourceId },
+      properties,
+    }),
+  })) as { id: string };
+  return page.id;
+}
+
+/** Interroge une data source (POST query) et renvoie les pages résultantes. */
+async function queryDataSource(
+  env: NotionEnv,
+  dataSourceId: string,
+  body: Record<string, unknown>,
+): Promise<{ id: string; properties?: Record<string, unknown> }[]> {
+  const res = (await notionFetch(env.token, `/data_sources/${dataSourceId}/query`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  })) as { results?: { id: string; properties?: Record<string, unknown> }[] };
+  return res.results ?? [];
+}
+
+/** Une propriété rich_text a-t-elle une valeur non vide ? */
+function richTextFilled(prop: unknown): boolean {
+  const p = prop as { rich_text?: { plain_text?: string }[] } | undefined;
+  return !!p?.rich_text?.some((r) => (r.plain_text ?? "").trim());
+}
+
+/**
+ * Trouve (par e-mail) ou crée la fiche CRM, et renvoie son id. Reprend les
+ * règles de rétention : État jamais régressé (on ne touche pas une fiche
+ * existante, sauf pour compléter le canal d'acquisition s'il est vide).
+ */
+async function upsertCrmFiche(
+  env: NotionEnv,
+  booking: Booking,
+  crmHasChannel: boolean,
+): Promise<string> {
+  const channel = crmHasChannel
+    ? formatAcquisitionChannel({ source: booking.acq_source, post: booking.acq_post })
+    : "";
+
+  const existing = await queryDataSource(env, env.crmDataSourceId, {
+    filter: { property: CRM_PROP.email, email: { equals: booking.lead_email } },
+    page_size: 1,
+  });
+  const page = existing[0];
+
+  if (page) {
+    // Fiche connue : premier contact gagnant. On complète juste le canal si vide,
+    // et on ne régresse jamais l'État (Client / En discussion...).
+    if (channel && !richTextFilled(page.properties?.[CRM_PROP.channel])) {
+      await patchProperties(env, page.id, {
+        [CRM_PROP.channel]: { rich_text: richText(channel) },
+      });
+    }
+    return page.id;
+  }
+
+  return createPlainPage(env, env.crmDataSourceId, {
+    [CRM_PROP.name]: { title: richText(booking.lead_name) },
+    [CRM_PROP.email]: { email: booking.lead_email },
+    [CRM_PROP.job]: { rich_text: richText(booking.activity) },
+    [CRM_PROP.status]: { status: { name: ETAT_RDV_PRIS } },
+    ...(channel ? { [CRM_PROP.channel]: { rich_text: richText(channel) } } : {}),
+  });
+}
+
 async function patchProperties(
   env: NotionEnv,
   pageId: string,
@@ -417,28 +505,45 @@ async function addComment(env: NotionEnv, pageId: string, richTextArr: unknown[]
 /* -------------------------------------------------------------------------- */
 
 /**
- * Crée la note de réunion (depuis le template « R1 »), la relie à la fiche CRM
- * (déjà créée/dédupliquée par crm.ts, dont l'id est en base via `crm_page_id`),
- * écrit l'onglet « Infos Formulaire », et poste le commentaire de gestion.
+ * Fiche CRM (lead) — via le TOKEN BOOKER (accès CRM prouvé) : dédup par e-mail,
+ * canal d'acquisition, État jamais régressé. Mémorise `crm_page_id` et le
+ * renvoie. Best-effort. Utilisée seule pour un lead en attente (pending), et
+ * comme première étape de la confirmation.
+ */
+export async function syncBookingCrmFiche(booking: Booking): Promise<string | null> {
+  const env = readEnv();
+  if (!env) return null;
+
+  const current = (await getBookingById(booking.id)) ?? booking;
+  if (current.crm_page_id) return current.crm_page_id; // idempotent
+
+  try {
+    const { crmHasChannel } = await ensureSchema(env);
+    const crmPageId = await upsertCrmFiche(env, current, crmHasChannel);
+    await setNotionSync(current.id, { crmPageId, error: null });
+    return crmPageId;
+  } catch (err) {
+    console.error("[notion] Upsert fiche CRM échoué:", err);
+    await safeMarkError(current.id, err);
+    return null;
+  }
+}
+
+/**
+ * Confirmation : fiche CRM (ci-dessus) puis note de réunion reliée (template
+ * « R1 »), onglet « Infos Formulaire » et commentaire de gestion.
  * Idempotent : ne recrée pas la note si `meeting_page_id` est déjà mémorisé.
  */
 export async function syncBookingConfirmed(booking: Booking): Promise<void> {
   const env = readEnv();
   if (!env) return;
 
+  // Fiche CRM d'abord (ancre de la relation). Sans elle, pas de note de réunion.
+  const crmPageId = await syncBookingCrmFiche(booking);
+  if (!crmPageId) return;
+
   // Relire l'état courant (idempotence sur double appel / retry).
   const current = (await getBookingById(booking.id)) ?? booking;
-
-  // La fiche CRM est l'ancre : elle est créée par crm.ts (canal d'acquisition,
-  // dédup par e-mail, État non régressé) et son id stocké dans `crm_page_id`.
-  // Sans elle, aucune note de réunion à relier.
-  const crmPageId = current.crm_page_id;
-  if (!crmPageId) {
-    console.warn(
-      `[notion] Pas de fiche CRM pour ${current.id} — note de réunion non créée.`,
-    );
-    return;
-  }
   // Idempotent : note de réunion déjà créée.
   if (current.meeting_page_id) return;
 

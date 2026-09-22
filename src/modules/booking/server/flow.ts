@@ -19,7 +19,6 @@ import {
   cancelBooking,
   getBookingById,
   insertCancellationFeedback,
-  setNotionSync,
 } from "./bookings";
 import { createEvent, updateEventTime, deleteEvent } from "./google";
 import {
@@ -28,9 +27,9 @@ import {
   sendCancellation,
   sendPendingManualAlert,
 } from "./resend";
-import { syncBookingToCrm } from "./crm";
 import {
   syncBookingConfirmed,
+  syncBookingCrmFiche,
   syncBookingCancelled,
   syncBookingRescheduled,
 } from "./notion";
@@ -113,13 +112,9 @@ export async function createBooking(
       } catch (mailErr) {
         console.error("[booking] Échec e-mail confirmation:", mailErr);
       }
-      // 1) Fiche CRM (dédup e-mail + canal d'acquisition) -> renvoie son id.
-      // 2) Note de réunion reliée + onglet « Infos Formulaire » + commentaire.
-      const crmPageId = await syncBookingToCrm(confirmed);
-      if (crmPageId) {
-        await setNotionSync(confirmed.id, { crmPageId });
-        await syncBookingConfirmed(confirmed);
-      }
+      // Sync Notion (token booker) : fiche CRM (dédup e-mail + canal
+      // d'acquisition) puis note de réunion reliée + onglet + commentaire.
+      await syncBookingConfirmed(confirmed);
     });
     return { status: "confirmed", booking };
   } catch (err) {
@@ -136,8 +131,7 @@ export async function createBooking(
       }
       // Le lead existe en base même sans event Google : il a sa place au CRM.
       // (Pas de note de réunion tant que l'appel n'est pas confirmé.)
-      const crmPageId = await syncBookingToCrm(pending);
-      if (crmPageId) await setNotionSync(pending.id, { crmPageId });
+      await syncBookingCrmFiche(pending);
     });
     return { status: "pending_manual", booking };
   }
