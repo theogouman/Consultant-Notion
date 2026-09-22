@@ -440,11 +440,18 @@ async function upsertCrmFiche(
     ? formatAcquisitionChannel({ source: booking.acq_source, post: booking.acq_post })
     : "";
 
-  const existing = await queryDataSource(env, env.crmDataSourceId, {
-    filter: { property: CRM_PROP.email, email: { equals: booking.lead_email } },
-    page_size: 1,
-  });
-  const page = existing[0];
+  // Dédup best-effort : si la requête échoue (droit de lecture, transitoire),
+  // on ne bloque pas -> on crée une fiche plutôt que d'échouer entièrement.
+  let page: { id: string; properties?: Record<string, unknown> } | undefined;
+  try {
+    const existing = await queryDataSource(env, env.crmDataSourceId, {
+      filter: { property: CRM_PROP.email, email: { equals: booking.lead_email } },
+      page_size: 1,
+    });
+    page = existing[0];
+  } catch (err) {
+    console.warn("[notion] Requête dédup CRM échouée (création d'une fiche):", err);
+  }
 
   if (page) {
     // Fiche connue : premier contact gagnant. On complète juste le canal si vide,
