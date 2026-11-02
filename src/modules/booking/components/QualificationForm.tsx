@@ -397,7 +397,7 @@ export default function QualificationForm({
           type="button"
           onClick={goNext}
           disabled={submitting}
-          className="inline-flex flex-none items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-medium text-white shadow-[0_8px_24px_-8px_rgba(224,98,90,0.6)] transition-all duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#d1504a] disabled:cursor-not-allowed disabled:opacity-70"
+          className="inline-flex flex-none items-center justify-center gap-2 rounded-xl nc-btn-3d px-6 py-3 text-base font-medium text-white transition-all duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {submitting ? "Réservation…" : isLast ? "Réserver mon appel" : "Suivant"}
           {!submitting && <span aria-hidden>→</span>}

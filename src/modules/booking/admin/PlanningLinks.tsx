@@ -53,9 +53,31 @@ function LinkRow({ link, baseUrl }: { link: BookingLink; baseUrl: string }) {
           <button
             type="button"
             onClick={copy}
-            className="rounded-sm border border-line bg-card px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:border-accent hover:text-accent"
+            aria-label={copied ? "Copié" : "Copier le lien"}
+            className="relative inline-grid h-7 w-[84px] place-items-center overflow-hidden rounded-sm border border-line bg-card text-xs font-medium text-ink transition-colors hover:border-accent hover:text-accent"
           >
-            {copied ? "Copié ✓" : "Copier"}
+            {/* Morph copie ↔ check : fondu + flou + léger glissement. */}
+            <span
+              className={`col-start-1 row-start-1 flex items-center gap-1.5 transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                copied ? "-translate-y-1 opacity-0 blur-[2px]" : "translate-y-0 opacity-100 blur-0"
+              }`}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <rect x="8" y="8" width="13" height="13" rx="2" />
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+              </svg>
+              Copier
+            </span>
+            <span
+              className={`col-start-1 row-start-1 flex items-center gap-1.5 text-accent transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                copied ? "translate-y-0 opacity-100 blur-0" : "translate-y-1 opacity-0 blur-[2px]"
+              }`}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+              Copié
+            </span>
           </button>
           <form action={deleteLinkAction}>
             <input type="hidden" name="link_id" value={link.id} />
@@ -132,7 +154,7 @@ export default function PlanningLinks({
         <div className="mt-5">
           <button
             type="submit"
-            className="inline-flex items-center justify-center rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#d1504a]"
+            className="inline-flex items-center justify-center rounded-xl nc-btn-3d px-5 py-2.5 text-sm font-medium text-white transition-colors"
           >
             Créer le lien
           </button>

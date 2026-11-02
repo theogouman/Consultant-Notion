@@ -155,7 +155,7 @@ export default function SettingsForm({ settings }: { settings: Settings }) {
       <div className="flex items-center gap-3">
         <button
           type="submit"
-          className="rounded-xl bg-accent px-6 py-3 text-base font-medium text-white shadow-[0_8px_24px_-8px_rgba(224,98,90,0.6)] transition-all hover:bg-[#d1504a]"
+          className="nc-btn-3d rounded-xl px-6 py-3 text-base font-medium text-white"
         >
           Enregistrer
         </button>

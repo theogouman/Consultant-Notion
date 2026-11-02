@@ -124,7 +124,7 @@ export default function ManageBooking(props: ManageBookingProps) {
         </p>
         <a
           href="/rdv"
-          className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-medium text-white shadow-[0_8px_24px_-8px_rgba(224,98,90,0.6)] transition-all hover:bg-[#d1504a]"
+          className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl nc-btn-3d px-6 py-3 text-base font-medium text-white transition-all"
         >
           Réserver un nouveau créneau
         </a>
@@ -231,7 +231,7 @@ export default function ManageBooking(props: ManageBookingProps) {
             setLoading(true); // évite le flash « aucun créneau » avant le skeleton
             setView("reschedule");
           }}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#d1504a]"
+          className="inline-flex items-center justify-center gap-2 rounded-xl nc-btn-3d px-5 py-3 text-sm font-medium text-white transition-colors"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {/* brightness-0 invert : icône rendue en blanc sur le fond corail. */}
