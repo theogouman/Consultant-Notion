@@ -20,6 +20,10 @@ import {
   type SettingsUpdate,
 } from "@/modules/booking/server/settings";
 import { cancelExisting } from "@/modules/booking/server/flow";
+import {
+  createBookingLink,
+  deleteBookingLink,
+} from "@/modules/booking/server/links";
 
 /** Vérifie la session admin. Lève si absente/invalide. */
 async function requireAdmin(): Promise<void> {
@@ -113,5 +117,31 @@ export async function adminCancelAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const id = String(formData.get("booking_id") ?? "");
   if (id) await cancelExisting(id);
+  revalidatePath("/admin");
+}
+
+/** Crée un lien de planification personnalisé. */
+export async function createLinkAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const firstName = String(formData.get("first_name") ?? "").trim();
+  const lastName = String(formData.get("last_name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  if (!firstName || !lastName || !email) return;
+
+  await createBookingLink({
+    firstName,
+    lastName,
+    email,
+    acqSource: String(formData.get("acq_source") ?? "").trim() || null,
+    linkedinUrl: String(formData.get("linkedin_url") ?? "").trim() || null,
+  });
+  revalidatePath("/admin");
+}
+
+/** Supprime un lien de planification. */
+export async function deleteLinkAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const id = String(formData.get("link_id") ?? "");
+  if (id) await deleteBookingLink(id);
   revalidatePath("/admin");
 }

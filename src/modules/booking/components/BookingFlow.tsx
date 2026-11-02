@@ -9,14 +9,27 @@ import QualificationForm, {
 import ResizeAnimator from "./ResizeAnimator";
 import { formatSlotLong, formatSlotBanner, timezoneParts } from "../lib/timezone";
 import { captureAcquisitionFromUrl, getAcquisition } from "../lib/acquisition";
+import { getFunnelSid } from "../lib/funnel-client";
 import {
   getAvailabilityAction,
   createBookingAction,
+  createPrefilledBookingAction,
+  trackFunnelAction,
   type BookingActionResult,
 } from "@/app/rdv/actions";
-import type { AvailableDay, Situation, Slot } from "../types";
+import type { AvailableDay, FunnelPatch, Situation, Slot } from "../types";
 
 type Phase = "picking" | "form" | "done";
+
+/** Infos pré-remplies pour un lien personnalisé (/r/<code>). */
+export interface Prefill {
+  linkCode: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** En-tête par défaut de l'écran de choix du créneau (utilisé par le modal). */
 const DEFAULT_HEADING = {
@@ -43,12 +56,15 @@ const EMPTY_VALUES: FormValues = {
 export default function BookingFlow({
   heading = DEFAULT_HEADING,
   onInteract,
+  prefill,
 }: {
   /** En-tête de l'écran de choix du créneau (copywriting propre à l'appelant). */
   heading?: { title: string; subtitle: string };
   /** Appelé quand l'utilisateur avance (choix de date / de créneau) — permet
    *  à un parent (booker embarqué) de recentrer la vue. */
   onInteract?: () => void;
+  /** Lien personnalisé : nom+e-mail pré-remplis, qualification masquée. */
+  prefill?: Prefill;
 } = {}) {
   const [leadTimezone, setLeadTimezone] = useState<string>("Europe/Paris");
   const [days, setDays] = useState<AvailableDay[]>([]);
@@ -67,6 +83,17 @@ export default function BookingFlow({
   });
   const [formStep, setFormStep] = useState(0);
   const honeypotRef = useRef<HTMLInputElement>(null);
+
+  // Suivi best-effort du tunnel (abandons). Jamais bloquant.
+  const sidRef = useRef<string | null>(null);
+  const track = useCallback((patch: FunnelPatch) => {
+    try {
+      const sid = (sidRef.current ??= getFunnelSid());
+      void trackFunnelAction(sid, patch);
+    } catch {
+      /* best-effort : on n'interrompt jamais le parcours */
+    }
+  }, []);
 
   const refreshAvailability = useCallback(async (tz: string) => {
     setLoading(true);
@@ -98,7 +125,43 @@ export default function BookingFlow({
     setServerError(null);
     setPhase("form");
     onInteract?.();
+
+    const acq = getAcquisition();
+    track({
+      step: "slot_selected",
+      startUtc: s.start_utc,
+      leadTimezone,
+      acquisitionSource: prefill ? null : acq.source,
+      acquisitionPost: prefill ? null : acq.post,
+      linkCode: prefill?.linkCode ?? null,
+      // Lien personnalisé : on connaît déjà le lead (utile si abandon).
+      ...(prefill
+        ? {
+            leadName: `${prefill.firstName} ${prefill.lastName}`.trim(),
+            leadEmail: prefill.email,
+          }
+        : {}),
+    });
   }
+
+  // Suivi best-effort du formulaire public (debounce) : dès qu'un e-mail valide
+  // est saisi, on capte les infos pour pouvoir relancer un abandon.
+  useEffect(() => {
+    if (prefill || phase !== "form") return;
+    const email = formValues.email.trim();
+    if (!EMAIL_RE.test(email)) return;
+    const t = window.setTimeout(() => {
+      track({
+        step: "form_started",
+        leadName: formValues.name.trim() || null,
+        leadEmail: email,
+        activity: formValues.activity.trim() || null,
+        situation: formValues.situation || null,
+        motivation: formValues.motivation.trim() || null,
+      });
+    }, 1200);
+    return () => window.clearTimeout(t);
+  }, [prefill, phase, formValues, track]);
 
   function handleTimezoneChange(tz: string) {
     setLeadTimezone(tz);
@@ -110,20 +173,29 @@ export default function BookingFlow({
     setSubmitting(true);
     setServerError(null);
     try {
+      const sid = (sidRef.current ??= getFunnelSid());
       const acquisition = getAcquisition();
-      const res = await createBookingAction({
-        name: formValues.name.trim(),
-        email: formValues.email.trim(),
-        activity: formValues.activity.trim(),
-        situation: formValues.situation as Situation,
-        motivation: formValues.motivation.trim(),
-        guestEmails: formValues.guestEmails.map((g) => g.trim()).filter(Boolean),
-        company: honeypotRef.current?.value || "",
-        startUtc: slot.start_utc,
-        leadTimezone,
-        acquisitionSource: acquisition.source,
-        acquisitionPost: acquisition.post,
-      });
+      const res = prefill
+        ? await createPrefilledBookingAction(
+            prefill.linkCode,
+            slot.start_utc,
+            leadTimezone,
+            sid,
+          )
+        : await createBookingAction({
+            name: formValues.name.trim(),
+            email: formValues.email.trim(),
+            activity: formValues.activity.trim(),
+            situation: formValues.situation as Situation,
+            motivation: formValues.motivation.trim(),
+            guestEmails: formValues.guestEmails.map((g) => g.trim()).filter(Boolean),
+            company: honeypotRef.current?.value || "",
+            startUtc: slot.start_utc,
+            leadTimezone,
+            acquisitionSource: acquisition.source,
+            acquisitionPost: acquisition.post,
+            sid,
+          });
       if (res.ok) {
         setResult(res);
         setPhase("done");
@@ -148,7 +220,7 @@ export default function BookingFlow({
     <>
       {/* Barre de progression À L'INTÉRIEUR du modal (rognée par les coins
           arrondis du panneau via son overflow-hidden). */}
-      {phase === "form" && (
+      {phase === "form" && !prefill && (
         <div className="h-1 w-full shrink-0 overflow-hidden bg-raised">
           <div
             className="h-full bg-accent transition-[width] duration-[300ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
@@ -188,7 +260,23 @@ export default function BookingFlow({
             </>
           )}
 
-          {phase === "form" && slot && (
+          {phase === "form" && slot && prefill && (
+            <PrefilledConfirm
+              name={`${prefill.firstName} ${prefill.lastName}`.trim()}
+              email={prefill.email}
+              slotLabel={`${formatSlotBanner(slot.start_utc, leadTimezone)} ${timezoneParts(leadTimezone).flag}`}
+              onModifySlot={() => {
+                setPhase("picking");
+                setBanner(null);
+                setServerError(null);
+              }}
+              submitting={submitting}
+              serverError={serverError}
+              onSubmit={handleSubmit}
+            />
+          )}
+
+          {phase === "form" && slot && !prefill && (
             <>
               {/* Honeypot anti-bot (hors écran, non focusable). */}
               <input
@@ -295,4 +383,65 @@ function SuccessView({
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/**
+ * Écran de confirmation d'un lien personnalisé : nom + e-mail déjà connus, pas
+ * de questions de qualification. Un seul geste : valider le créneau.
+ */
+function PrefilledConfirm({
+  name,
+  email,
+  slotLabel,
+  onModifySlot,
+  submitting,
+  serverError,
+  onSubmit,
+}: {
+  name: string;
+  email: string;
+  slotLabel: string;
+  onModifySlot: () => void;
+  submitting: boolean;
+  serverError: string | null;
+  onSubmit: () => void;
+}) {
+  return (
+    <div className="pr-12">
+      <h2 className="nc-title text-xl sm:text-2xl">On réserve ton créneau ?</h2>
+      <p className="mt-2 text-[0.95rem] text-muted">
+        Tu réserves en tant que <span className="font-medium text-ink">{name}</span>{" "}
+        (<span className="text-ink">{email}</span>).
+      </p>
+
+      <div className="mt-5 rounded-sm border border-line bg-raised px-4 py-3 text-[0.95rem] text-ink">
+        {slotLabel}
+      </div>
+
+      {serverError && (
+        <p className="mt-4 text-sm text-accent" role="alert">
+          {serverError}
+        </p>
+      )}
+
+      <div className="mt-6 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={submitting}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-medium text-white shadow-[0_8px_24px_-8px_rgba(224,98,90,0.6)] transition-colors hover:bg-[#d1504a] disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {submitting ? "Réservation…" : "Réserver mon appel"}
+        </button>
+        <button
+          type="button"
+          onClick={onModifySlot}
+          disabled={submitting}
+          className="text-sm font-medium text-muted transition-colors hover:text-ink disabled:opacity-50"
+        >
+          Modifier le créneau
+        </button>
+      </div>
+    </div>
+  );
 }

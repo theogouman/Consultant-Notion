@@ -14,6 +14,7 @@ import {
   markReminderSent,
 } from "@/modules/booking/server/bookings";
 import { sendReminder } from "@/modules/booking/server/resend";
+import { sweepAbandonedFunnels } from "@/modules/booking/server/funnel";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +40,16 @@ async function handle(req: Request): Promise<NextResponse> {
     }
   }
 
-  return NextResponse.json({ ok: true, candidates: due.length, sent });
+  // Balayage des abandons de tunnel -> email interne « Un lead n'a pas confirmé ».
+  // Isolé : un échec ici ne doit pas masquer le succès des rappels.
+  let abandoned = 0;
+  try {
+    abandoned = await sweepAbandonedFunnels();
+  } catch (err) {
+    console.error("[cron/reminders] balayage abandons échoué:", err);
+  }
+
+  return NextResponse.json({ ok: true, candidates: due.length, sent, abandoned });
 }
 
 export async function POST(req: Request) {

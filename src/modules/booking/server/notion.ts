@@ -46,6 +46,7 @@ const CRM_PROP = {
   job: "Job",
   status: "État",
   channel: "Canal d'acquisition",
+  linkedin: "LinkedIn",
 } as const;
 
 /** Délai de rappel -> nombre de mois (recontact après annulation). */
@@ -126,6 +127,8 @@ interface ResolvedSchema {
   meetingTemplateId: string;
   /** La base CRM a-t-elle une propriété « Canal d'acquisition » (rich_text) ? */
   crmHasChannel: boolean;
+  /** La base CRM a-t-elle une propriété « LinkedIn » (url) ? */
+  crmHasLinkedin: boolean;
 }
 let schemaCache: ResolvedSchema | null = null;
 
@@ -219,9 +222,10 @@ async function ensureSchema(env: NotionEnv): Promise<ResolvedSchema> {
     throw new Error(`Schéma Notion incompatible :\n- ${missing.join("\n- ")}`);
   }
 
-  // « Canal d'acquisition » est optionnel : présent -> on l'alimente ; absent
-  // -> on ne bloque pas (on saute juste l'écriture du canal).
+  // « Canal d'acquisition » (rich_text) et « LinkedIn » (url) sont OPTIONNELS :
+  // présents -> alimentés ; absents -> on saute leur écriture (jamais bloquant).
   const crmHasChannel = crm[CRM_PROP.channel]?.type === "rich_text";
+  const crmHasLinkedin = crm[CRM_PROP.linkedin]?.type === "url";
 
   const meetingTemplateId = await resolveTemplateId(
     env,
@@ -231,7 +235,7 @@ async function ensureSchema(env: NotionEnv): Promise<ResolvedSchema> {
     "Réunions (template « R1 »)",
   );
 
-  schemaCache = { meetingTemplateId, crmHasChannel };
+  schemaCache = { meetingTemplateId, crmHasChannel, crmHasLinkedin };
   return schemaCache;
 }
 
@@ -435,10 +439,13 @@ async function upsertCrmFiche(
   env: NotionEnv,
   booking: Booking,
   crmHasChannel: boolean,
+  crmHasLinkedin: boolean,
 ): Promise<string> {
   const channel = crmHasChannel
     ? formatAcquisitionChannel({ source: booking.acq_source, post: booking.acq_post })
     : "";
+  const linkedin = crmHasLinkedin ? booking.linkedin?.trim() || "" : "";
+  const job = booking.activity?.trim() || "";
 
   // Dédup best-effort : si la requête échoue (droit de lecture, transitoire),
   // on ne bloque pas -> on crée une fiche plutôt que d'échouer entièrement.
@@ -454,23 +461,34 @@ async function upsertCrmFiche(
   }
 
   if (page) {
-    // Fiche connue : premier contact gagnant. On complète juste le canal si vide,
-    // et on ne régresse jamais l'État (Client / En discussion...).
+    // Fiche connue : premier contact gagnant. On complète les champs encore
+    // vides (canal, LinkedIn) et on ne régresse jamais l'État (Client...).
+    const fill: Record<string, unknown> = {};
     if (channel && !richTextFilled(page.properties?.[CRM_PROP.channel])) {
-      await patchProperties(env, page.id, {
-        [CRM_PROP.channel]: { rich_text: richText(channel) },
-      });
+      fill[CRM_PROP.channel] = { rich_text: richText(channel) };
     }
+    if (linkedin && !urlFilled(page.properties?.[CRM_PROP.linkedin])) {
+      fill[CRM_PROP.linkedin] = { url: linkedin };
+    }
+    if (Object.keys(fill).length) await patchProperties(env, page.id, fill);
     return page.id;
   }
 
   return createPlainPage(env, env.crmDataSourceId, {
     [CRM_PROP.name]: { title: richText(booking.lead_name) },
     [CRM_PROP.email]: { email: booking.lead_email },
-    [CRM_PROP.job]: { rich_text: richText(booking.activity) },
+    // Job = activité : absent pour les liens personnalisés -> on ne l'écrit pas.
+    ...(job ? { [CRM_PROP.job]: { rich_text: richText(job) } } : {}),
     [CRM_PROP.status]: { status: { name: ETAT_RDV_PRIS } },
     ...(channel ? { [CRM_PROP.channel]: { rich_text: richText(channel) } } : {}),
+    ...(linkedin ? { [CRM_PROP.linkedin]: { url: linkedin } } : {}),
   });
+}
+
+/** Une propriété url a-t-elle une valeur ? */
+function urlFilled(prop: unknown): boolean {
+  const p = prop as { url?: string | null } | undefined;
+  return !!(p?.url && p.url.trim());
 }
 
 async function patchProperties(
@@ -525,8 +543,8 @@ export async function syncBookingCrmFiche(booking: Booking): Promise<string | nu
   if (current.crm_page_id) return current.crm_page_id; // idempotent
 
   try {
-    const { crmHasChannel } = await ensureSchema(env);
-    const crmPageId = await upsertCrmFiche(env, current, crmHasChannel);
+    const { crmHasChannel, crmHasLinkedin } = await ensureSchema(env);
+    const crmPageId = await upsertCrmFiche(env, current, crmHasChannel, crmHasLinkedin);
     await setNotionSync(current.id, { crmPageId, error: null });
     return crmPageId;
   } catch (err) {
@@ -588,19 +606,23 @@ export async function syncBookingConfirmed(booking: Booking): Promise<void> {
     }
 
     if (tabId) {
-      const situation = SITUATION_TEXT[current.situation] ?? current.situation;
       // Date affichée = date à laquelle le créneau a été confirmé (created_at),
-      // pas la date du rendez-vous lui-même.
-      await appendChildren(env, tabId, [
+      // pas la date du rendez-vous lui-même. Les champs vides (liens
+      // personnalisés) ne génèrent pas de bullet.
+      const situation = current.situation
+        ? SITUATION_TEXT[current.situation] ?? current.situation
+        : null;
+      const infoBlocks = [
         paragraph(
           richText(
             `Le lead a pris rendez-vous le ${parisLongDate(current.created_at)}, voici ses informations :`,
           ),
         ),
-        bullet("Secteur d'activité :", current.activity),
-        bullet("Usage de Notion :", situation),
-        bullet("Pourquoi cet appel :", current.motivation),
-      ]);
+        current.activity ? bullet("Secteur d'activité :", current.activity) : null,
+        situation ? bullet("Usage de Notion :", situation) : null,
+        current.motivation ? bullet("Pourquoi cet appel :", current.motivation) : null,
+      ].filter(Boolean);
+      await appendChildren(env, tabId, infoBlocks);
     } else {
       console.warn(
         `[notion] Onglet « ${INFOS_TAB_TITLE} » introuvable (template non appliqué ?) pour ${meetingPageId}`,
@@ -687,24 +709,41 @@ function buildCancelComment(
   const slot = parisLongDateTime(current.start_utc);
   const cancelDate = parisLongDateNow();
   const motif = cancelMotifClause(feedback, recontact);
-  const situation = SITUATION_CLAUSE[current.situation] ?? current.situation;
 
-  return [
+  const head = `Un appel était prévu pour le ${slot}, mais a été annulé le ${cancelDate} parce qu'${motif}.`;
+
+  // Les infos de qualif sont absentes pour les liens personnalisés : on ne
+  // garde alors que la première phrase.
+  if (!current.activity && !current.situation && !current.motivation) {
+    return [{ type: "text", text: { content: head } }];
+  }
+
+  const situation = current.situation
+    ? SITUATION_CLAUSE[current.situation] ?? current.situation
+    : null;
+  const bits: string[] = [];
+  if (current.activity) bits.push(`son activité était « ${current.activity} »`);
+  if (situation) bits.push(situation);
+  const context = bits.length ? `Il avait indiqué que ${bits.join(", ")}. ` : "";
+
+  const blocks: unknown[] = [
     {
       type: "text",
       text: {
-        content:
-          `Un appel était prévu pour le ${slot}, mais a été annulé le ${cancelDate} parce qu'${motif}.\n\n` +
-          `Il avait indiqué que son activité était « ${current.activity} », ${situation}. ` +
-          `Il était motivé à prendre cet appel parce que :\n\n`,
+        content: current.motivation
+          ? `${head}\n\n${context}Il était motivé à prendre cet appel parce que :\n\n`
+          : `${head}\n\n${context}`.trimEnd(),
       },
     },
-    {
+  ];
+  if (current.motivation) {
+    blocks.push({
       type: "text",
       text: { content: `« ${current.motivation} »` },
       annotations: { italic: true },
-    },
-  ];
+    });
+  }
+  return blocks;
 }
 
 export async function syncBookingCancelled(

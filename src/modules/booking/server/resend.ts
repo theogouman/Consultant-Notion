@@ -17,7 +17,9 @@ import {
   internalCancellationEmail,
   reminderEmail,
   pendingManualAlertEmail,
+  leadNotConfirmedEmail,
   type EmailContent,
+  type NotConfirmedLead,
 } from "../emails/templates";
 import type { Booking, CancelFeedback, Settings } from "../types";
 
@@ -148,5 +150,17 @@ export async function sendPendingManualAlert(
     settings,
     to: [settings.reply_to],
     content: pendingManualAlertEmail(booking),
+  });
+}
+
+/** Alerte interne : un lead a abandonné le tunnel sans confirmer. */
+export async function sendLeadNotConfirmed(
+  lead: NotConfirmedLead,
+  settings: Settings,
+): Promise<void> {
+  await send({
+    settings,
+    to: [settings.reply_to],
+    content: leadNotConfirmedEmail(lead),
   });
 }

@@ -206,46 +206,111 @@ PS : YouTube ${YOUTUBE_URL} · LinkedIn ${LINKEDIN_URL} · Études de cas ${CASE
 /* -------------------------------------------------------------------------- */
 /* 2. Notification interne (Théo)                                             */
 /* -------------------------------------------------------------------------- */
+/** Rend un tableau clé/valeur (valeurs vides ignorées, échappées). */
+function kvTable(rows: [string, string | null | undefined][]): string {
+  const body = rows
+    .filter(([, v]) => v != null && String(v).trim() !== "")
+    .map(
+      ([k, v]) =>
+        `<tr><td style="padding:6px 12px 6px 0;color:${MUTED};font-size:14px;vertical-align:top;white-space:nowrap;">${escapeHtml(k)}</td><td style="padding:6px 0;color:${INK};font-size:14px;">${escapeHtml(String(v))}</td></tr>`,
+    )
+    .join("");
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">${body}</table>`;
+}
+
+/** Lignes clé/valeur en texte brut (valeurs vides ignorées). */
+function kvText(rows: [string, string | null | undefined][]): string {
+  return rows
+    .filter(([, v]) => v != null && String(v).trim() !== "")
+    .map(([k, v]) => `${k} : ${v}`)
+    .join("\n");
+}
+
 export function internalNotificationEmail(booking: Booking): EmailContent {
-  const situation = SITUATION_LABEL[booking.situation] ?? booking.situation;
-  const channel =
-    formatAcquisitionChannel({ source: booking.acq_source, post: booking.acq_post }) ||
-    "—";
-  const rows = [
+  const situation = booking.situation
+    ? SITUATION_LABEL[booking.situation] ?? booking.situation
+    : null;
+  const channel = formatAcquisitionChannel({
+    source: booking.acq_source,
+    post: booking.acq_post,
+  });
+  const rows: [string, string | null | undefined][] = [
     ["Nom", booking.lead_name],
     ["E-mail", booking.lead_email],
-    ["Invité(s)", booking.guest_email ?? "—"],
+    ["Invité(s)", booking.guest_email],
     ["Créneau", slotLine(booking)],
     ["Activité", booking.activity],
     ["Situation", situation],
     ["Motivation", booking.motivation],
     ["Canal d'acquisition", channel],
-    ["Meet", booking.meet_url ?? "—"],
-  ]
-    .map(
-      ([k, v]) =>
-        `<tr><td style="padding:6px 12px 6px 0;color:${MUTED};font-size:14px;vertical-align:top;white-space:nowrap;">${k}</td><td style="padding:6px 0;color:${INK};font-size:14px;">${v}</td></tr>`,
-    )
-    .join("");
+    ["LinkedIn", booking.linkedin],
+    ["Meet", booking.meet_url],
+  ];
 
   const html = layout(
     `<h1 style="margin:0 0 20px;font-size:20px;font-weight:700;color:${INK};">Nouvelle réservation</h1>` +
-      `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">${rows}</table>`,
+      kvTable(rows),
   );
-
-  const text = `Nouvelle réservation
-
-Nom : ${booking.lead_name}
-E-mail : ${booking.lead_email}
-Invité : ${booking.guest_email ?? "—"}
-Créneau : ${slotLine(booking)}
-Activité : ${booking.activity}
-Situation : ${situation}
-Motivation : ${booking.motivation}
-Canal d'acquisition : ${channel}
-Meet : ${booking.meet_url ?? "—"}`;
+  const text = `Nouvelle réservation\n\n${kvText(rows)}`;
 
   return { subject: `Nouvelle résa — ${booking.lead_name}`, html, text };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Email interne : un lead n'a pas confirmé (abandon de tunnel)               */
+/* -------------------------------------------------------------------------- */
+export interface NotConfirmedLead {
+  lead_name: string | null;
+  lead_email: string | null;
+  activity: string | null;
+  situation: string | null;
+  motivation: string | null;
+  start_utc: string | null;
+  lead_timezone: string | null;
+  acq_source: string | null;
+  acq_post: string | null;
+  step: string | null;
+  created_at: string;
+}
+
+const STEP_LABEL: Record<string, string> = {
+  slot_selected: "A choisi un créneau",
+  form_started: "A commencé le formulaire",
+  form_completed: "A rempli le formulaire (sans valider)",
+  submitted: "A soumis",
+};
+
+export function leadNotConfirmedEmail(lead: NotConfirmedLead): EmailContent {
+  const situation = lead.situation
+    ? SITUATION_LABEL[lead.situation] ?? lead.situation
+    : null;
+  const channel = formatAcquisitionChannel({
+    source: lead.acq_source,
+    post: lead.acq_post,
+  });
+  const slot =
+    lead.start_utc && lead.lead_timezone
+      ? `${formatSlotLong(lead.start_utc, lead.lead_timezone)} (${timezoneAbbrev(lead.start_utc, lead.lead_timezone)})`
+      : null;
+  const rows: [string, string | null | undefined][] = [
+    ["Nom", lead.lead_name],
+    ["E-mail", lead.lead_email],
+    ["Créneau visé", slot],
+    ["Activité", lead.activity],
+    ["Situation", situation],
+    ["Motivation", lead.motivation],
+    ["Canal d'acquisition", channel],
+    ["Étape atteinte", lead.step ? STEP_LABEL[lead.step] ?? lead.step : null],
+  ];
+
+  const html = layout(
+    `<h1 style="margin:0 0 8px;font-size:20px;font-weight:700;color:${INK};">Un lead n'a pas confirmé</h1>` +
+      p("Ce prospect a commencé une réservation mais ne l'a pas finalisée. Ses infos captées&nbsp;:") +
+      kvTable(rows),
+  );
+  const text = `Un lead n'a pas confirmé\n\nCe prospect a commencé une réservation sans la finaliser.\n\n${kvText(rows)}`;
+
+  return { subject: "Un lead n'a pas confirmé", html, text };
 }
 
 /* -------------------------------------------------------------------------- */

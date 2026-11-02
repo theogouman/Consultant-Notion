@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { getSettings } from "@/modules/booking/server/settings";
-import { getUpcomingBookings } from "@/modules/booking/server/bookings";
+import { getFunnelLog } from "@/modules/booking/server/funnel";
+import { listBookingLinks } from "@/modules/booking/server/links";
+import { baseUrl } from "@/modules/booking/emails/links";
 import SettingsForm from "@/modules/booking/admin/SettingsForm";
-import BookingsList from "@/modules/booking/admin/BookingsList";
+import AdminTabs from "@/modules/booking/admin/AdminTabs";
+import FunnelLog from "@/modules/booking/admin/FunnelLog";
+import PlanningLinks from "@/modules/booking/admin/PlanningLinks";
 import { logoutAction } from "@/app/admin/actions";
 
 export const metadata: Metadata = {
@@ -13,13 +17,14 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 /**
- * Page admin unique (§8), protégée par le middleware (cookie signé).
- * Section 1 — Règles + planning. Section 2 — Réservations à venir.
+ * Page admin unique, protégée par le middleware (cookie signé).
+ * Trois sections : Logs (journal du tunnel), Liens de planification, Réglages.
  */
 export default async function AdminPage() {
-  const [settings, bookings] = await Promise.all([
+  const [settings, log, links] = await Promise.all([
     getSettings(),
-    getUpcomingBookings(),
+    getFunnelLog(150),
+    listBookingLinks(),
   ]);
 
   return (
@@ -39,17 +44,18 @@ export default async function AdminPage() {
         </form>
       </header>
 
-      <section className="mb-14">
-        <h2 className="nc-title mb-6 text-xl">Réservations à venir</h2>
-        <BookingsList bookings={bookings} hostTimezone={settings.host_timezone} />
-      </section>
-
-      <section>
-        <h2 className="nc-title mb-6 text-xl">Règles &amp; disponibilités</h2>
-        <div className="rounded-md bg-card p-6 nc-shadow-2 sm:p-8">
-          <SettingsForm settings={settings} />
-        </div>
-      </section>
+      <AdminTabs
+        logs={<FunnelLog entries={log} hostTimezone={settings.host_timezone} />}
+        links={<PlanningLinks links={links} baseUrl={baseUrl()} />}
+        settings={
+          <section>
+            <h2 className="nc-title mb-6 text-xl">Règles &amp; disponibilités</h2>
+            <div className="rounded-md bg-card p-6 nc-shadow-2 sm:p-8">
+              <SettingsForm settings={settings} />
+            </div>
+          </section>
+        }
+      />
     </main>
   );
 }

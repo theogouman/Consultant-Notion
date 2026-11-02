@@ -48,13 +48,16 @@ export interface Booking {
   lead_name: string;
   lead_email: string;
   guest_email: string | null;
-  activity: string;
-  situation: Situation;
-  motivation: string;
+  /** Qualif : null quand la réservation vient d'un lien personnalisé. */
+  activity: string | null;
+  situation: Situation | null;
+  motivation: string | null;
   status: BookingStatus;
   google_event_id: string | null;
   meet_url: string | null;
   manage_token: string;
+  /** URL du profil LinkedIn (liens personnalisés) -> propriété Notion « LinkedIn ». */
+  linkedin: string | null;
   /** Attribution : `?source=` de l'URL d'arrivée (null si absent). */
   acq_source: string | null;
   /** Attribution : `?post=` de l'URL d'arrivée (null si absent). */
@@ -119,9 +122,10 @@ export interface CancelFeedback {
 export interface QualificationInput {
   name: string;
   email: string;
-  activity: string;
-  situation: Situation;
-  motivation: string;
+  /** Qualif : optionnelle (vide pour les liens personnalisés). */
+  activity?: string | null;
+  situation?: Situation | null;
+  motivation?: string | null;
   /** Jusqu'à 5 invités (e-mails). Stockés en base en liste séparée par virgules. */
   guestEmails?: string[];
   /** Honeypot anti-bot : doit rester vide. */
@@ -130,4 +134,77 @@ export interface QualificationInput {
   acquisitionSource?: string | null;
   /** Attribution — paramètre d'URL `post` (ex. `carrousel-notion-crm`). */
   acquisitionPost?: string | null;
+  /** URL LinkedIn (liens personnalisés) -> propriété Notion « LinkedIn ». */
+  linkedin?: string | null;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Tunnel (funnel) : suivi de progression + abandons                           */
+/* -------------------------------------------------------------------------- */
+
+export type FunnelStatus = "in_progress" | "converted" | "abandoned";
+export type FunnelStep =
+  | "slot_selected"
+  | "form_started"
+  | "form_completed"
+  | "submitted";
+
+/** Une session de tunnel telle que stockée en base. */
+export interface FunnelSession {
+  id: string;
+  sid: string;
+  status: FunnelStatus;
+  step: FunnelStep | null;
+  lead_name: string | null;
+  lead_email: string | null;
+  activity: string | null;
+  situation: string | null;
+  motivation: string | null;
+  lead_timezone: string | null;
+  start_utc: string | null;
+  acq_source: string | null;
+  acq_post: string | null;
+  link_code: string | null;
+  booking_id: string | null;
+  notified_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Données partielles envoyées par le client pour tracer la progression. */
+export interface FunnelPatch {
+  step?: FunnelStep;
+  leadName?: string | null;
+  leadEmail?: string | null;
+  activity?: string | null;
+  situation?: string | null;
+  motivation?: string | null;
+  leadTimezone?: string | null;
+  startUtc?: string | null;
+  acquisitionSource?: string | null;
+  acquisitionPost?: string | null;
+  linkCode?: string | null;
+}
+
+/** Entrée du journal admin : session de tunnel + statut booking réel. */
+export interface FunnelLogEntry extends FunnelSession {
+  booking_status: BookingStatus | null;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Liens de planification personnalisés                                        */
+/* -------------------------------------------------------------------------- */
+
+/** Un lien court personnalisé tel que stocké en base. */
+export interface BookingLink {
+  id: string;
+  code: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  acq_source: string | null;
+  linkedin_url: string | null;
+  created_at: string;
+  used_at: string | null;
+  booking_id: string | null;
 }

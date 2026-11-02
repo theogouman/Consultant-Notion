@@ -103,13 +103,14 @@ export async function insertConfirmedBooking(params: {
         params.input.guestEmails && params.input.guestEmails.length
           ? params.input.guestEmails.join(", ")
           : null,
-      activity: params.input.activity,
-      situation: params.input.situation,
-      motivation: params.input.motivation,
+      activity: params.input.activity ?? null,
+      situation: params.input.situation ?? null,
+      motivation: params.input.motivation ?? null,
       status: "confirmed",
       manage_token,
       acq_source: params.input.acquisitionSource ?? null,
       acq_post: params.input.acquisitionPost ?? null,
+      linkedin: params.input.linkedin ?? null,
     })
     .select("*")
     .single();

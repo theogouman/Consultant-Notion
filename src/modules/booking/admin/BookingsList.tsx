@@ -59,9 +59,13 @@ export default function BookingsList({
                   {b.lead_email}
                   {b.guest_email ? ` · invité : ${b.guest_email}` : ""}
                 </p>
-                <p className="mt-1 text-sm text-muted">
-                  {b.activity} · {SITUATION_LABEL[b.situation] ?? b.situation}
-                </p>
+                {(b.activity || b.situation) && (
+                  <p className="mt-1 text-sm text-muted">
+                    {[b.activity, b.situation ? SITUATION_LABEL[b.situation] ?? b.situation : null]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                )}
                 {b.motivation && (
                   <p className="mt-1 text-sm text-ink/80">« {b.motivation} »</p>
                 )}
