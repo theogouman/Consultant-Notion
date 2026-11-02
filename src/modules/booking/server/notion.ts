@@ -37,7 +37,7 @@ const INFOS_TAB_TITLE = "Infos Formulaire";
 /** Options attendues (doivent préexister côté Notion). */
 const ETAT_RDV_PRIS = "Rdv Pris";
 const ETAT_ANNULE = "Annulé avant R1";
-const TYPE_APPEL_VENTE = "Appel de Vente";
+const TYPE_APPEL_VENTE = "Appel Commercial";
 
 /** Noms EXACTS des propriétés de la base CRM. */
 const CRM_PROP = {
@@ -123,14 +123,19 @@ async function notionFetch(
 /* Introspection + validation du schéma (mise en cache par instance)          */
 /* -------------------------------------------------------------------------- */
 
-interface ResolvedSchema {
-  meetingTemplateId: string;
+interface CrmSchema {
   /** La base CRM a-t-elle une propriété « Canal d'acquisition » (rich_text) ? */
   crmHasChannel: boolean;
   /** La base CRM a-t-elle une propriété « LinkedIn » (url) ? */
   crmHasLinkedin: boolean;
 }
-let schemaCache: ResolvedSchema | null = null;
+interface MeetingSchema {
+  meetingTemplateId: string;
+}
+// Caches séparés : une dérive du schéma Réunions ne doit JAMAIS empêcher
+// l'écriture de la fiche CRM (et inversement).
+let crmSchemaCache: CrmSchema | null = null;
+let meetingSchemaCache: MeetingSchema | null = null;
 
 type NotionProps = Record<string, { type?: string; [k: string]: unknown }>;
 
@@ -175,57 +180,68 @@ async function resolveTemplateId(
   return match.id;
 }
 
+function needProp(
+  missing: string[],
+  props: NotionProps,
+  name: string,
+  type: string,
+  where: string,
+) {
+  const p = props[name];
+  if (!p) missing.push(`${where}: propriété « ${name} » absente`);
+  else if (p.type !== type)
+    missing.push(`${where}: « ${name} » est de type ${p.type}, attendu ${type}`);
+}
+
 /**
- * Vérifie que toutes les propriétés/options attendues existent, et résout les
- * templates. Échoue avec un message explicite si un nom/option manque.
+ * Valide le schéma CRM (propriétés + options de statut). Indépendant de la base
+ * Réunions : la fiche CRM ne doit pas échouer si le schéma Réunions dérive.
  */
-async function ensureSchema(env: NotionEnv): Promise<ResolvedSchema> {
-  if (schemaCache) return schemaCache;
+async function ensureCrmSchema(env: NotionEnv): Promise<CrmSchema> {
+  if (crmSchemaCache) return crmSchemaCache;
 
-  const [crm, meetings] = await Promise.all([
-    getDataSource(env, env.crmDataSourceId),
-    getDataSource(env, env.meetingsDataSourceId),
-  ]);
-
+  const crm = await getDataSource(env, env.crmDataSourceId);
   const missing: string[] = [];
-  const need = (props: NotionProps, name: string, type: string, where: string) => {
-    const p = props[name];
-    if (!p) missing.push(`${where}: propriété « ${name} » absente`);
-    else if (p.type !== type)
-      missing.push(`${where}: « ${name} » est de type ${p.type}, attendu ${type}`);
-  };
-
-  // CRM
-  need(crm, "Nom", "title", "CRM");
-  need(crm, "E-mail", "email", "CRM");
-  need(crm, "Job", "rich_text", "CRM");
-  need(crm, "Next Follow-up", "date", "CRM");
-  need(crm, "État", "status", "CRM");
+  needProp(missing, crm, "Nom", "title", "CRM");
+  needProp(missing, crm, "E-mail", "email", "CRM");
+  needProp(missing, crm, "Job", "rich_text", "CRM");
+  needProp(missing, crm, "Next Follow-up", "date", "CRM");
+  needProp(missing, crm, "État", "status", "CRM");
   if (crm["État"]?.type === "status") {
     const opts = optionNames(crm["État"], "status");
     for (const o of [ETAT_RDV_PRIS, ETAT_ANNULE]) {
       if (!opts.includes(o)) missing.push(`CRM: option Status « ${o} » absente sur « État »`);
     }
   }
+  if (missing.length) {
+    throw new Error(`Schéma CRM Notion incompatible :\n- ${missing.join("\n- ")}`);
+  }
 
-  // Réunions
-  need(meetings, "Type", "select", "Réunions");
-  need(meetings, "Date", "date", "Réunions");
-  need(meetings, "CRM", "relation", "Réunions");
+  // « Canal d'acquisition » (rich_text) et « LinkedIn » (url) sont OPTIONNELS.
+  crmSchemaCache = {
+    crmHasChannel: crm[CRM_PROP.channel]?.type === "rich_text",
+    crmHasLinkedin: crm[CRM_PROP.linkedin]?.type === "url",
+  };
+  return crmSchemaCache;
+}
+
+/** Valide le schéma Réunions (propriétés + option « Type ») et résout le template. */
+async function ensureMeetingSchema(env: NotionEnv): Promise<MeetingSchema> {
+  if (meetingSchemaCache) return meetingSchemaCache;
+
+  const meetings = await getDataSource(env, env.meetingsDataSourceId);
+  const missing: string[] = [];
+  needProp(missing, meetings, "Type", "select", "Réunions");
+  needProp(missing, meetings, "Date", "date", "Réunions");
+  needProp(missing, meetings, "CRM", "relation", "Réunions");
   if (meetings["Type"]?.type === "select") {
     const opts = optionNames(meetings["Type"], "select");
     if (!opts.includes(TYPE_APPEL_VENTE))
       missing.push(`Réunions: option Select « ${TYPE_APPEL_VENTE} » absente sur « Type »`);
   }
-
   if (missing.length) {
-    throw new Error(`Schéma Notion incompatible :\n- ${missing.join("\n- ")}`);
+    throw new Error(`Schéma Réunions Notion incompatible :\n- ${missing.join("\n- ")}`);
   }
-
-  // « Canal d'acquisition » (rich_text) et « LinkedIn » (url) sont OPTIONNELS :
-  // présents -> alimentés ; absents -> on saute leur écriture (jamais bloquant).
-  const crmHasChannel = crm[CRM_PROP.channel]?.type === "rich_text";
-  const crmHasLinkedin = crm[CRM_PROP.linkedin]?.type === "url";
 
   const meetingTemplateId = await resolveTemplateId(
     env,
@@ -234,9 +250,8 @@ async function ensureSchema(env: NotionEnv): Promise<ResolvedSchema> {
     (t) => t.name.toLowerCase() === "r1",
     "Réunions (template « R1 »)",
   );
-
-  schemaCache = { meetingTemplateId, crmHasChannel, crmHasLinkedin };
-  return schemaCache;
+  meetingSchemaCache = { meetingTemplateId };
+  return meetingSchemaCache;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -543,7 +558,7 @@ export async function syncBookingCrmFiche(booking: Booking): Promise<string | nu
   if (current.crm_page_id) return current.crm_page_id; // idempotent
 
   try {
-    const { crmHasChannel, crmHasLinkedin } = await ensureSchema(env);
+    const { crmHasChannel, crmHasLinkedin } = await ensureCrmSchema(env);
     const crmPageId = await upsertCrmFiche(env, current, crmHasChannel, crmHasLinkedin);
     await setNotionSync(current.id, { crmPageId, error: null });
     return crmPageId;
@@ -573,7 +588,7 @@ export async function syncBookingConfirmed(booking: Booking): Promise<void> {
   if (current.meeting_page_id) return;
 
   try {
-    const { meetingTemplateId } = await ensureSchema(env);
+    const { meetingTemplateId } = await ensureMeetingSchema(env);
 
     // Note de réunion (reliée au CRM) depuis le template « R1 ».
     const meetingPageId = await createFromTemplate(
@@ -774,7 +789,7 @@ export async function syncBookingCancelled(
   // 2) CRM : État « Annulé avant R1 » + éventuel recontact + commentaire motif.
   if (current.crm_page_id) {
     try {
-      await ensureSchema(env);
+      await ensureCrmSchema(env);
 
       await patchProperties(env, current.crm_page_id, {
         "État": { status: { name: ETAT_ANNULE } },
@@ -822,9 +837,7 @@ export async function syncBookingRescheduled(booking: Booking): Promise<void> {
   if (!current.meeting_page_id) return;
 
   try {
-    await ensureSchema(env);
-
-    // Propriété Date (écrase l'ancienne).
+    // Simple patch de la Date : aucune validation de schéma requise.
     await patchProperties(env, current.meeting_page_id, {
       Date: { date: { start: parisIso(current.start_utc) } },
     });

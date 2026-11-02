@@ -29,7 +29,7 @@ export default async function PlanningLinkPage({
       <div className="overflow-hidden rounded-2xl border border-line bg-card nc-shadow-2">
         <BookingFlow
           heading={{
-            title: `${link.first_name}, choisis ton créneau`,
+            title: `Quand est-ce qu'on se parle, ${link.first_name} ?`,
             subtitle: "On cale un premier échange pour parler de ton organisation.",
           }}
           prefill={{
