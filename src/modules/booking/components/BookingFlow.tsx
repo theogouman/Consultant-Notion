@@ -7,7 +7,12 @@ import QualificationForm, {
   type FormValues,
 } from "./QualificationForm";
 import ResizeAnimator from "./ResizeAnimator";
-import { formatSlotLong, formatSlotBanner, timezoneParts } from "../lib/timezone";
+import {
+  formatSlotLong,
+  formatSlotBanner,
+  timezoneParts,
+  utcToZonedDate,
+} from "../lib/timezone";
 import { captureAcquisitionFromUrl, getAcquisition } from "../lib/acquisition";
 import { getFunnelSid } from "../lib/funnel-client";
 import {
@@ -83,6 +88,13 @@ export default function BookingFlow({
   });
   const [formStep, setFormStep] = useState(0);
   const honeypotRef = useRef<HTMLInputElement>(null);
+
+  // Lien personnalisé : infos pré-remplies, éditables dans l'écran de résumé.
+  const [prefillName, setPrefillName] = useState(
+    prefill ? `${prefill.firstName} ${prefill.lastName}`.trim() : "",
+  );
+  const [prefillEmail, setPrefillEmail] = useState(prefill?.email ?? "");
+  const [prefillGuests, setPrefillGuests] = useState<string[]>([]);
 
   // Suivi best-effort du tunnel (abandons). Jamais bloquant.
   const sidRef = useRef<string | null>(null);
@@ -181,6 +193,11 @@ export default function BookingFlow({
             slot.start_utc,
             leadTimezone,
             sid,
+            {
+              name: prefillName.trim(),
+              email: prefillEmail.trim(),
+              guestEmails: prefillGuests.map((g) => g.trim()).filter(Boolean),
+            },
           )
         : await createBookingAction({
             name: formValues.name.trim(),
@@ -256,16 +273,25 @@ export default function BookingFlow({
                 onSelect={handleSelect}
                 onTimezoneChange={handleTimezoneChange}
                 onSelectDate={onInteract}
+                initialDate={
+                  prefill && slot
+                    ? utcToZonedDate(slot.start_utc, leadTimezone)
+                    : undefined
+                }
               />
             </>
           )}
 
           {phase === "form" && slot && prefill && (
-            <PrefilledConfirm
-              name={`${prefill.firstName} ${prefill.lastName}`.trim()}
-              email={prefill.email}
-              slotLabel={`${formatSlotBanner(slot.start_utc, leadTimezone)} ${timezoneParts(leadTimezone).flag}`}
-              onModifySlot={() => {
+            <PrefilledSummary
+              name={prefillName}
+              onNameChange={setPrefillName}
+              email={prefillEmail}
+              onEmailChange={setPrefillEmail}
+              guests={prefillGuests}
+              onGuestsChange={setPrefillGuests}
+              dateLabel={`${formatSlotBanner(slot.start_utc, leadTimezone)} ${timezoneParts(leadTimezone).flag}`}
+              onEditDate={() => {
                 setPhase("picking");
                 setBanner(null);
                 setServerError(null);
@@ -385,37 +411,156 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+const MAX_GUESTS = 5;
+
 /**
- * Écran de confirmation d'un lien personnalisé : nom + e-mail déjà connus, pas
- * de questions de qualification. Un seul geste : valider le créneau.
+ * Écran de résumé d'un lien personnalisé. Nom + e-mail pré-remplis mais
+ * ÉDITABLES, ajout d'invités possible. La dernière ligne = la date : y cliquer
+ * ramène à la vue « jour » (créneaux + ligne des dates), pas au calendrier.
  */
-function PrefilledConfirm({
+function PrefilledSummary({
   name,
+  onNameChange,
   email,
-  slotLabel,
-  onModifySlot,
+  onEmailChange,
+  guests,
+  onGuestsChange,
+  dateLabel,
+  onEditDate,
   submitting,
   serverError,
   onSubmit,
 }: {
   name: string;
+  onNameChange: (v: string) => void;
   email: string;
-  slotLabel: string;
-  onModifySlot: () => void;
+  onEmailChange: (v: string) => void;
+  guests: string[];
+  onGuestsChange: (v: string[]) => void;
+  dateLabel: string;
+  onEditDate: () => void;
   submitting: boolean;
   serverError: string | null;
   onSubmit: () => void;
 }) {
+  const labelCls = "mb-1.5 block text-sm font-medium text-ink";
+  const inputCls =
+    "w-full rounded-sm border border-line bg-raised px-4 py-3 text-[1rem] text-ink placeholder:text-muted/60 outline-none transition-colors focus:border-accent focus:bg-card focus:ring-2 focus:ring-accent/20";
+
+  function addGuest() {
+    if (guests.length >= MAX_GUESTS) return;
+    onGuestsChange([...guests, ""]);
+  }
+  function updateGuest(i: number, value: string) {
+    const next = guests.slice();
+    next[i] = value;
+    onGuestsChange(next);
+  }
+  function removeGuest(i: number) {
+    onGuestsChange(guests.filter((_, idx) => idx !== i));
+  }
+
   return (
     <div className="pr-12">
-      <h2 className="nc-title text-xl sm:text-2xl">On réserve ton créneau ?</h2>
-      <p className="mt-2 text-[0.95rem] text-muted">
-        Tu réserves en tant que <span className="font-medium text-ink">{name}</span>{" "}
-        (<span className="text-ink">{email}</span>).
-      </p>
+      <h2 className="nc-title text-xl sm:text-2xl">
+        Les informations sont correctes ?
+      </h2>
 
-      <div className="mt-5 rounded-sm border border-line bg-raised px-4 py-3 text-[0.95rem] text-ink">
-        {slotLabel}
+      <div className="mt-6 space-y-5">
+        <div>
+          <label className={labelCls} htmlFor="pf-name">
+            Nom complet
+          </label>
+          <input
+            id="pf-name"
+            type="text"
+            autoComplete="name"
+            value={name}
+            onChange={(e) => onNameChange(e.target.value)}
+            className={inputCls}
+          />
+        </div>
+
+        <div>
+          <label className={labelCls} htmlFor="pf-email">
+            E-mail
+          </label>
+          <input
+            id="pf-email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => onEmailChange(e.target.value)}
+            className={inputCls}
+          />
+
+          {/* Invités (jusqu'à 5). */}
+          <div className="mt-3 space-y-2">
+            {guests.map((g, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="off"
+                  placeholder={`E-mail de l'invité ${i + 1}`}
+                  value={g}
+                  onChange={(e) => updateGuest(i, e.target.value)}
+                  className="min-w-0 flex-1 rounded-sm border border-line bg-raised px-3 py-2 text-sm text-ink placeholder:text-muted/60 outline-none transition-colors focus:border-accent focus:bg-card focus:ring-2 focus:ring-accent/20"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeGuest(i)}
+                  aria-label="Retirer l'invité"
+                  className="flex h-8 w-8 flex-none items-center justify-center rounded-sm text-muted transition-colors hover:bg-raised hover:text-accent"
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+                    <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+            {guests.length < MAX_GUESTS && (
+              <button
+                type="button"
+                onClick={addGuest}
+                className="inline-flex items-center gap-1.5 rounded-sm bg-raised px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-line hover:text-ink"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/images/Annexes/person.crop.circle.badge.plus.svg"
+                  alt=""
+                  aria-hidden
+                  className="h-4 w-auto"
+                />
+                Ajouter un invité
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Dernière ligne : la date. Cliquer => retour à la vue « jour ». */}
+        <div>
+          <span className={labelCls}>Date</span>
+          <button
+            type="button"
+            onClick={onEditDate}
+            disabled={submitting}
+            className="group flex w-full items-center justify-between gap-3 rounded-sm border border-line bg-raised px-4 py-3 text-left transition-colors hover:border-accent hover:bg-card disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span className="min-w-0 text-[1rem] text-ink">{dateLabel}</span>
+            <span className="flex flex-none items-center gap-1 text-xs font-medium text-muted transition-colors group-hover:text-accent">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/Annexes/clock.arrow.trianglehead.counterclockwise.rotate.90.svg"
+                alt=""
+                aria-hidden
+                className="h-4 w-auto"
+              />
+              Modifier
+            </span>
+          </button>
+        </div>
       </div>
 
       {serverError && (
@@ -424,22 +569,14 @@ function PrefilledConfirm({
         </p>
       )}
 
-      <div className="mt-6 flex items-center gap-3">
+      <div className="mt-6">
         <button
           type="button"
           onClick={onSubmit}
           disabled={submitting}
-          className="inline-flex items-center justify-center gap-2 rounded-xl nc-btn-3d px-6 py-3 text-base font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+          className="inline-flex items-center justify-center gap-2 rounded-xl nc-btn-3d px-6 py-3 text-base font-medium text-white disabled:cursor-not-allowed disabled:opacity-70"
         >
           {submitting ? "Réservation…" : "Réserver mon appel"}
-        </button>
-        <button
-          type="button"
-          onClick={onModifySlot}
-          disabled={submitting}
-          className="text-sm font-medium text-muted transition-colors hover:text-ink disabled:opacity-50"
-        >
-          Modifier le créneau
         </button>
       </div>
     </div>

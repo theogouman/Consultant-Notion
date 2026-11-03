@@ -30,6 +30,7 @@ export default function SlotPicker({
   onSelect,
   onTimezoneChange,
   onSelectDate,
+  initialDate,
 }: {
   days: AvailableDay[];
   leadTimezone: string;
@@ -38,12 +39,18 @@ export default function SlotPicker({
   onTimezoneChange: (tz: string) => void;
   /** Notifie le parent qu'une date a été choisie (pour recentrer la vue). */
   onSelectDate?: () => void;
+  /** Ouvre directement la vue « jour » (créneaux + ligne des dates) sur cette
+   *  date au lieu du calendrier mensuel (ex. retour depuis l'écran de résumé). */
+  initialDate?: string | null;
 }) {
   const availByDate = useMemo(
     () => new Map(days.map((d) => [d.date, d.slots])),
     [days],
   );
   const availableDates = useMemo(() => new Set(days.map((d) => d.date)), [days]);
+
+  // Date d'ouverture directe en vue « jour » (si elle est disponible).
+  const initialValid = !!initialDate && availableDates.has(initialDate);
 
   const bounds = useMemo(() => {
     if (days.length === 0) return null;
@@ -54,16 +61,29 @@ export default function SlotPicker({
   }, [days]);
 
   const [monthAnchor, setMonthAnchor] = useState<string>(() =>
-    (days[0] ? DateTime.fromISO(days[0].date) : DateTime.now().setZone(leadTimezone))
+    (initialValid
+      ? DateTime.fromISO(initialDate!)
+      : days[0]
+        ? DateTime.fromISO(days[0].date)
+        : DateTime.now().setZone(leadTimezone))
       .startOf("month")
       .toISODate()!,
   );
-  const [view, setView] = useState<"month" | "day">("month");
-  const [activeDate, setActiveDate] = useState<string | null>(null);
+  const [view, setView] = useState<"month" | "day">(initialValid ? "day" : "month");
+  const [activeDate, setActiveDate] = useState<string | null>(
+    initialValid ? initialDate! : null,
+  );
   const stageRef = useRef<HTMLDivElement>(null);
 
-  // Nouveau jeu de disponibilités (ex. changement de fuseau) -> on réinitialise.
+  // Nouveau jeu de disponibilités (ex. changement de fuseau) -> on réinitialise
+  // vers le calendrier. On saute le TOUT PREMIER passage (au montage) pour ne
+  // pas écraser la vue « jour » demandée via `initialDate`.
+  const skipReset = useRef(true);
   useEffect(() => {
+    if (skipReset.current) {
+      skipReset.current = false;
+      return;
+    }
     const first = days[0]
       ? DateTime.fromISO(days[0].date)
       : DateTime.now().setZone(leadTimezone);

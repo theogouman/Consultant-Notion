@@ -167,6 +167,8 @@ export interface FunnelSession {
   link_code: string | null;
   booking_id: string | null;
   notified_at: string | null;
+  /** Archivage manuel depuis l'admin (masqué du journal par défaut). */
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
 }

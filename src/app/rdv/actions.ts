@@ -112,11 +112,21 @@ export async function createBookingAction(
  * source, LinkedIn) viennent du lien côté SERVEUR — pas du client. Les 3
  * questions de qualification restent vides.
  */
+/** Infos éditables côté client dans l'écran de résumé d'un lien personnalisé. */
+export interface PrefilledOverrides {
+  name?: string;
+  email?: string;
+  guestEmails?: string[];
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function createPrefilledBookingAction(
   code: string,
   startUtc: string,
   leadTimezone: string,
   sid?: string,
+  overrides?: PrefilledOverrides,
 ): Promise<BookingActionResult> {
   const h = await headers();
   const ip = clientIp(h);
@@ -134,13 +144,38 @@ export async function createPrefilledBookingAction(
       return { ok: false, code: "invalid", error: "Lien invalide ou expiré." };
     }
 
-    const name = `${link.first_name} ${link.last_name}`.trim();
+    // Le prospect peut corriger son nom / e-mail et ajouter des invités ; la
+    // source d'acquisition et le LinkedIn restent ceux du lien (jamais exposés
+    // au client). Les 3 questions de qualification restent vides.
+    const name = (overrides?.name ?? "").trim() || `${link.first_name} ${link.last_name}`.trim();
+    if (!name) {
+      return { ok: false, code: "invalid", error: "Le nom est requis." };
+    }
+
+    const email = (overrides?.email ?? "").trim() || link.email;
+    if (!EMAIL_RE.test(email)) {
+      return { ok: false, code: "invalid", error: "Adresse e-mail invalide." };
+    }
+
+    const guestEmails = (overrides?.guestEmails ?? [])
+      .map((g) => g.trim())
+      .filter(Boolean);
+    if (guestEmails.length > 5) {
+      return { ok: false, code: "invalid", error: "5 invités maximum." };
+    }
+    for (const g of guestEmails) {
+      if (!EMAIL_RE.test(g)) {
+        return { ok: false, code: "invalid", error: "L'e-mail d'un invité est invalide." };
+      }
+    }
+
     const input: QualificationInput = {
       name,
-      email: link.email,
+      email,
       activity: null,
       situation: null,
       motivation: null,
+      guestEmails,
       acquisitionSource: link.acq_source,
       acquisitionPost: null,
       linkedin: link.linkedin_url,

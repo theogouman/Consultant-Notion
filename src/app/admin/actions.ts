@@ -24,6 +24,10 @@ import {
   createBookingLink,
   deleteBookingLink,
 } from "@/modules/booking/server/links";
+import {
+  archiveFunnelSession,
+  unarchiveFunnelSession,
+} from "@/modules/booking/server/funnel";
 
 /** Vérifie la session admin. Lève si absente/invalide. */
 async function requireAdmin(): Promise<void> {
@@ -143,5 +147,21 @@ export async function deleteLinkAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const id = String(formData.get("link_id") ?? "");
   if (id) await deleteBookingLink(id);
+  revalidatePath("/admin");
+}
+
+/** Archive une entrée du journal des réservations. */
+export async function archiveFunnelAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const id = String(formData.get("funnel_id") ?? "");
+  if (id) await archiveFunnelSession(id);
+  revalidatePath("/admin");
+}
+
+/** Désarchive une entrée du journal des réservations. */
+export async function unarchiveFunnelAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const id = String(formData.get("funnel_id") ?? "");
+  if (id) await unarchiveFunnelSession(id);
   revalidatePath("/admin");
 }

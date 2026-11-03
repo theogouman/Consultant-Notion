@@ -3,12 +3,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatSlotLong, timezoneAbbrev } from "../lib/timezone";
 import { formatAcquisitionChannel } from "../lib/acquisition";
+import { archiveFunnelAction, unarchiveFunnelAction } from "@/app/admin/actions";
 import type { FunnelLogEntry } from "../types";
 
 const SITUATION_LABEL: Record<string, string> = {
   notion_mal: "Notion, mais mal",
   pas_outil: "Pas d'outil",
 };
+
+type Filter = "all" | "unconfirmed" | "archived";
 
 type Tag = { label: string; cls: string };
 
@@ -37,6 +40,10 @@ function isUnconfirmed(e: FunnelLogEntry): boolean {
   );
 }
 
+function isArchived(e: FunnelLogEntry): boolean {
+  return !!e.archived_at;
+}
+
 function formatDate(iso: string): string {
   try {
     return new Date(iso).toLocaleString("fr-FR", {
@@ -57,26 +64,31 @@ export default function FunnelLog({
   entries: FunnelLogEntry[];
   hostTimezone: string;
 }) {
-  const [filter, setFilter] = useState<"all" | "unconfirmed">("all");
+  const [filter, setFilter] = useState<Filter>("all");
 
-  const unconfirmedCount = useMemo(
-    () => entries.filter(isUnconfirmed).length,
-    [entries],
+  const active = useMemo(() => entries.filter((e) => !isArchived(e)), [entries]);
+  const archived = useMemo(() => entries.filter(isArchived), [entries]);
+
+  const counts = useMemo(
+    () => ({
+      all: active.length,
+      unconfirmed: active.filter(isUnconfirmed).length,
+      archived: archived.length,
+    }),
+    [active, archived],
   );
-  const shown = useMemo(
-    () => (filter === "all" ? entries : entries.filter(isUnconfirmed)),
-    [entries, filter],
-  );
+
+  const shown = useMemo(() => {
+    if (filter === "archived") return archived;
+    if (filter === "unconfirmed") return active.filter(isUnconfirmed);
+    return active;
+  }, [active, archived, filter]);
 
   return (
     <section>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h2 className="nc-title text-xl">Journal des réservations</h2>
-        <FilterMenu
-          value={filter}
-          onChange={setFilter}
-          counts={{ all: entries.length, unconfirmed: unconfirmedCount }}
-        />
+        <FilterMenu value={filter} onChange={setFilter} counts={counts} />
       </div>
 
       {shown.length === 0 ? (
@@ -97,10 +109,11 @@ export default function FunnelLog({
               ? SITUATION_LABEL[e.situation] ?? e.situation
               : null;
             const details = [e.activity, situation].filter(Boolean).join(" · ");
+            const archivedRow = isArchived(e);
             return (
               <div
                 key={e.id}
-                className="rounded-sm border border-line bg-card px-4 py-3"
+                className={`rounded-sm border border-line bg-card px-4 py-3 ${archivedRow ? "opacity-70" : ""}`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -118,6 +131,11 @@ export default function FunnelLog({
                           lien perso
                         </span>
                       )}
+                      {archivedRow && (
+                        <span className="rounded-full bg-raised px-2 py-0.5 text-[0.7rem] text-muted">
+                          archivé
+                        </span>
+                      )}
                     </div>
                     {e.lead_email && (
                       <p className="text-sm text-muted">{e.lead_email}</p>
@@ -131,9 +149,12 @@ export default function FunnelLog({
                       <p className="mt-0.5 text-xs text-muted">Canal : {channel}</p>
                     )}
                   </div>
-                  <span className="flex-none whitespace-nowrap text-xs text-muted">
-                    {formatDate(e.created_at)}
-                  </span>
+                  <div className="flex flex-none flex-col items-end gap-1.5">
+                    <span className="whitespace-nowrap text-xs text-muted">
+                      {formatDate(e.created_at)}
+                    </span>
+                    <ArchiveButton id={e.id} archived={archivedRow} />
+                  </div>
                 </div>
               </div>
             );
@@ -144,13 +165,44 @@ export default function FunnelLog({
   );
 }
 
+/** Bouton archiver / désarchiver (server action + revalidation). */
+function ArchiveButton({ id, archived }: { id: string; archived: boolean }) {
+  return (
+    <form action={archived ? unarchiveFunnelAction : archiveFunnelAction}>
+      <input type="hidden" name="funnel_id" value={id} />
+      <button
+        type="submit"
+        className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs font-medium text-muted transition-colors hover:bg-raised hover:text-ink"
+      >
+        {archived ? (
+          <>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M3 8h18M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M9 12l3-3 3 3M12 9v7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Désarchiver
+          </>
+        ) : (
+          <>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M3 8h18M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M4 4h16v4H4zM10 13h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Archiver
+          </>
+        )}
+      </button>
+    </form>
+  );
+}
+
 /* -------------------------------------------------------------------------- */
-/* Filtre « dropdown menu morph » (adapté de transitions.dev)                  */
+/* Filtre « dropdown menu morph » (transitions.dev)                            */
+/* Le bouton (icône) morphe en surface de menu : taille + rayon animés.        */
 /* -------------------------------------------------------------------------- */
 
-const FILTER_LABEL: Record<"all" | "unconfirmed", string> = {
+const FILTER_LABEL: Record<Filter, string> = {
   all: "Tout",
   unconfirmed: "Non confirmés",
+  archived: "Archivés",
 };
 
 function FilterMenu({
@@ -158,9 +210,9 @@ function FilterMenu({
   onChange,
   counts,
 }: {
-  value: "all" | "unconfirmed";
-  onChange: (v: "all" | "unconfirmed") => void;
-  counts: { all: number; unconfirmed: number };
+  value: Filter;
+  onChange: (v: Filter) => void;
+  counts: Record<Filter, number>;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -179,91 +231,70 @@ function FilterMenu({
     };
   }, [open]);
 
-  const options: ("all" | "unconfirmed")[] = ["all", "unconfirmed"];
+  const options: Filter[] = ["all", "unconfirmed", "archived"];
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        className="inline-flex items-center gap-2 rounded-xl border border-line bg-card px-3 py-2 text-sm font-medium text-ink transition-colors hover:border-accent"
-      >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M3 5h18M6 12h12M10 19h4"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-        <span>{FILTER_LABEL[value]}</span>
-        {value === "unconfirmed" && (
-          <span className="rounded-full bg-accent/15 px-1.5 text-xs font-semibold text-accent">
-            {counts.unconfirmed}
-          </span>
-        )}
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          aria-hidden
-          className={`transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${open ? "rotate-180" : ""}`}
+    <div ref={ref} className="t-fmorph-anchor">
+      <div className="t-fmorph" data-open={open ? "true" : "false"}>
+        {/* Déclencheur : icône de filtre (morphe en sortant). */}
+        <button
+          type="button"
+          className="t-fmorph-trigger"
+          aria-expanded={open}
+          aria-haspopup="menu"
+          aria-label="Filtrer le journal"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen((o) => !o);
+          }}
         >
-          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path
+              d="M3 5h18M6 12h12M10 19h4"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+          {value !== "all" && <span className="t-fmorph-dot" aria-hidden />}
+        </button>
 
-      {/* Surface qui « morphe » depuis le bouton : scale + fondu + flou. */}
-      <div
-        role="menu"
-        className={`absolute right-0 z-20 mt-2 w-56 origin-top-right overflow-hidden rounded-xl border border-line bg-card p-1 nc-shadow-2 ${
-          open
-            ? "pointer-events-auto scale-100 opacity-100 blur-0"
-            : "pointer-events-none scale-[0.96] opacity-0 blur-[2px]"
-        }`}
-        style={{
-          transition: open
-            ? "opacity 200ms cubic-bezier(0.34,1.25,0.64,1), transform 350ms cubic-bezier(0.34,1.25,0.64,1), filter 200ms cubic-bezier(0.34,1.25,0.64,1)"
-            : "opacity 180ms cubic-bezier(0.22,1,0.36,1), transform 250ms cubic-bezier(0.22,1,0.36,1), filter 180ms cubic-bezier(0.22,1,0.36,1)",
-        }}
-        hidden={!open}
-      >
-        {options.map((opt) => {
-          const selected = value === opt;
-          return (
-            <button
-              key={opt}
-              type="button"
-              role="menuitemradio"
-              aria-checked={selected}
-              onClick={() => {
-                onChange(opt);
-                setOpen(false);
-              }}
-              className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                selected ? "bg-raised text-ink" : "text-muted hover:bg-raised hover:text-ink"
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden
-                  className={selected ? "text-accent" : "text-transparent"}
-                >
-                  <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                {FILTER_LABEL[opt]}
-              </span>
-              <span className="text-xs text-muted">{counts[opt]}</span>
-            </button>
-          );
-        })}
+        {/* Panneau révélé par le morph. */}
+        <div className="t-fmorph-panel" role="menu">
+          {options.map((opt) => {
+            const selected = value === opt;
+            return (
+              <button
+                key={opt}
+                type="button"
+                role="menuitemradio"
+                aria-checked={selected}
+                onClick={() => {
+                  onChange(opt);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                  selected ? "bg-raised text-ink" : "text-muted hover:bg-raised hover:text-ink"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden
+                    className={selected ? "text-accent" : "text-transparent"}
+                  >
+                    <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {FILTER_LABEL[opt]}
+                </span>
+                <span className="text-xs text-muted">{counts[opt]}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

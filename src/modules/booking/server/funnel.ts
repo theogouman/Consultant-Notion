@@ -107,6 +107,28 @@ export async function sweepAbandonedFunnels(): Promise<number> {
   return notified;
 }
 
+/** Archive une entrée de journal (la masque de la vue par défaut). Best-effort. */
+export async function archiveFunnelSession(id: string): Promise<void> {
+  if (!id) return;
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("funnel_sessions")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(`Archivage journal échoué: ${error.message}`);
+}
+
+/** Désarchive une entrée de journal. */
+export async function unarchiveFunnelSession(id: string): Promise<void> {
+  if (!id) return;
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("funnel_sessions")
+    .update({ archived_at: null })
+    .eq("id", id);
+  if (error) throw new Error(`Désarchivage journal échoué: ${error.message}`);
+}
+
 /** Journal admin : sessions récentes + statut réel du booking lié. */
 export async function getFunnelLog(limit = 100): Promise<FunnelLogEntry[]> {
   const supabase = getSupabaseAdmin();
