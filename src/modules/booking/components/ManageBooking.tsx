@@ -25,6 +25,8 @@ export interface ManageBookingProps {
   leadName: string;
   status: BookingStatus;
   meetUrl: string | null;
+  /** Contexte « lien ponctuel déjà réservé » : titre d'accueil adapté. */
+  alreadyBooked?: boolean;
 }
 
 /**
@@ -218,9 +220,12 @@ export default function ManageBooking(props: ManageBookingProps) {
   // overview
   return (
     <div>
-      <h2 className="nc-title mb-2 text-xl sm:text-2xl">Que souhaites-tu faire ?</h2>
+      <h2 className="nc-title mb-2 text-xl sm:text-2xl">
+        {props.alreadyBooked ? "Cet appel a déjà été réservé" : "Que souhaites-tu faire ?"}
+      </h2>
       <p className="mb-6 text-[0.95rem] text-ink">
-        Notre appel est planifié pour le {dateChip(currentStart)}
+        {props.alreadyBooked ? "Ton appel est planifié pour le " : "Notre appel est planifié pour le "}
+        {dateChip(currentStart)}
       </p>
 
       <div className="flex flex-col gap-3 border-t border-line pt-5">
@@ -241,7 +246,7 @@ export default function ManageBooking(props: ManageBookingProps) {
             aria-hidden
             className="h-4 w-auto brightness-0 invert"
           />
-          Je veux replanifier
+          {props.alreadyBooked ? "Modifier mon créneau" : "Je veux replanifier"}
         </button>
         <button
           type="button"

@@ -35,6 +35,15 @@ function LinkRow({ link, baseUrl }: { link: BookingLink; baseUrl: string }) {
                 En attente
               </span>
             )}
+            <span
+              className={`rounded-full px-2 py-0.5 text-[0.7rem] font-medium ${
+                link.kind === "permanent"
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-accent/15 text-accent"
+              }`}
+            >
+              {link.kind === "permanent" ? "Permanent" : "Ponctuel"}
+            </span>
           </div>
           <p className="text-sm text-muted">{link.email}</p>
           <p className="mt-1 break-all font-mono text-sm text-ink">{url}</p>
@@ -149,6 +158,29 @@ export default function PlanningLinks({
               placeholder="https://www.linkedin.com/in/…"
               className={inputCls}
             />
+          </div>
+          <div className="sm:col-span-2">
+            <span className={labelCls}>Type de lien</span>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <label className="flex-1">
+                <input type="radio" name="kind" value="one_time" defaultChecked className="peer sr-only" />
+                <span className="block cursor-pointer rounded-sm border border-line bg-raised px-3 py-2.5 text-sm text-ink transition-colors hover:border-accent/50 peer-checked:border-accent peer-checked:bg-accent/5 peer-checked:text-accent">
+                  <span className="font-medium">Ponctuel</span>
+                  <span className="mt-0.5 block text-xs text-muted">
+                    Un seul appel. En revenant, le prospect peut modifier son créneau.
+                  </span>
+                </span>
+              </label>
+              <label className="flex-1">
+                <input type="radio" name="kind" value="permanent" className="peer sr-only" />
+                <span className="block cursor-pointer rounded-sm border border-line bg-raised px-3 py-2.5 text-sm text-ink transition-colors hover:border-accent/50 peer-checked:border-accent peer-checked:bg-accent/5 peer-checked:text-accent">
+                  <span className="font-medium">Permanent</span>
+                  <span className="mt-0.5 block text-xs text-muted">
+                    Réutilisable : chaque visite permet de planifier un appel.
+                  </span>
+                </span>
+              </label>
+            </div>
           </div>
         </div>
         <div className="mt-5">

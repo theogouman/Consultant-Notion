@@ -138,6 +138,7 @@ export async function createLinkAction(formData: FormData): Promise<void> {
     email,
     acqSource: String(formData.get("acq_source") ?? "").trim() || null,
     linkedinUrl: String(formData.get("linkedin_url") ?? "").trim() || null,
+    kind: String(formData.get("kind") ?? "") === "permanent" ? "permanent" : "one_time",
   });
   revalidatePath("/admin");
 }

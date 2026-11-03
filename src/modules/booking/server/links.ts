@@ -6,7 +6,7 @@
 import "server-only";
 import { getSupabaseAdmin } from "./supabase";
 import { generateLinkCode } from "../lib/tokens";
-import type { BookingLink } from "../types";
+import type { BookingLink, BookingLinkKind } from "../types";
 
 export interface CreateLinkInput {
   firstName: string;
@@ -14,6 +14,8 @@ export interface CreateLinkInput {
   email: string;
   acqSource?: string | null;
   linkedinUrl?: string | null;
+  /** Défaut : « one_time » (ponctuel). */
+  kind?: BookingLinkKind;
 }
 
 /** Crée un lien personnalisé avec un code court unique. */
@@ -32,6 +34,7 @@ export async function createBookingLink(input: CreateLinkInput): Promise<Booking
         email: input.email,
         acq_source: input.acqSource?.trim() || null,
         linkedin_url: input.linkedinUrl?.trim() || null,
+        kind: input.kind === "permanent" ? "permanent" : "one_time",
       })
       .select("*")
       .single();

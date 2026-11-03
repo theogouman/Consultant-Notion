@@ -197,6 +197,9 @@ export interface FunnelLogEntry extends FunnelSession {
 /* Liens de planification personnalisés                                        */
 /* -------------------------------------------------------------------------- */
 
+/** Type de lien : réutilisable vs usage unique. */
+export type BookingLinkKind = "permanent" | "one_time";
+
 /** Un lien court personnalisé tel que stocké en base. */
 export interface BookingLink {
   id: string;
@@ -206,6 +209,8 @@ export interface BookingLink {
   email: string;
   acq_source: string | null;
   linkedin_url: string | null;
+  /** « one_time » : revenir après réservation propose de modifier le créneau. */
+  kind: BookingLinkKind;
   created_at: string;
   used_at: string | null;
   booking_id: string | null;
