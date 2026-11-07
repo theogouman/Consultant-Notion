@@ -4,7 +4,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { formatDateFr, getRessource, ressources } from "./index";
+import { formatDateFr, frenchTypo, getRessource, ressources } from "./index";
 
 test("slugs : format URL et unicité", () => {
   const slugs = ressources.map((r) => r.slug);
@@ -39,4 +39,9 @@ test("getRessource / formatDateFr", () => {
   assert.equal(getRessource("memoire-ia-notion")?.slug, "memoire-ia-notion");
   assert.equal(getRessource("inexistante"), undefined);
   assert.equal(formatDateFr("2026-11-07"), "7 novembre 2026");
+});
+
+test("frenchTypo : espaces insécables autour de « » ? :", () => {
+  assert.equal(frenchTypo("« Basic setup » : oui ?"), "«\u00a0Basic setup\u00a0»\u00a0: oui\u00a0?");
+  assert.equal(frenchTypo("https://developers.notion.com/prompts/setup"), "https://developers.notion.com/prompts/setup");
 });
