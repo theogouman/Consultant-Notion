@@ -31,7 +31,9 @@ test("chaque ressource a un contenu exploitable", () => {
     // Ids d'ancre uniques dans la page.
     const ids = r.sections.map((s) => s.id).filter(Boolean);
     assert.equal(new Set(ids).size, ids.length, r.slug);
-    if (r.media) assert.ok(r.media.src.startsWith(`/ressources/${r.slug}/`), r.slug);
+    if (r.media && r.media.type !== "animation") {
+      assert.ok(r.media.src.startsWith(`/ressources/${r.slug}/`), r.slug);
+    }
   }
 });
 

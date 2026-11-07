@@ -92,7 +92,9 @@ inconnu renvoie une 404.
 2. **Enregistrer** l'export dans le tableau `ALL` de
    `src/content/ressources/index.ts` (une ligne d'import + une entrée).
 3. **Déposer les médias** dans `public/ressources/<slug>/` (vidéo en 16:9 de
-   préférence ; un visuel de repli s'affiche tant qu'elle est absente).
+   préférence ; un visuel de repli s'affiche tant qu'elle est absente). Pour
+   une animation codée : composant dans `src/components/ressources/animations/`,
+   déclaré dans `animations/index.tsx`, puis `media: { type: "animation", nom }`.
 
 Puis `npm test` (slugs uniques, dates ISO, présence d'un CTA…) et
 `npm run build`. Lien de campagne :

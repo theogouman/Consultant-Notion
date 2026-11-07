@@ -9,6 +9,9 @@
  * dans le texte. Le marqueur est mis en évidence au rendu pour la relecture.
  */
 
+/** Noms des animations codées disponibles. */
+export type AnimationNom = "memoire-ia";
+
 /** Média principal du hero. Fichiers dans `public/ressources/<slug>/`. */
 export type RessourceMedia =
   | {
@@ -18,6 +21,14 @@ export type RessourceMedia =
       /** Image affichée avant lecture (optionnelle). */
       poster?: string;
       /** Description du contenu de la vidéo (accessibilité). */
+      alt: string;
+    }
+  | {
+      /** Animation codée (composant React), enregistrée dans
+       *  `src/components/ressources/animations/index.ts`. */
+      type: "animation";
+      nom: AnimationNom;
+      /** Description de l'animation (aria-label). */
       alt: string;
     }
   | {

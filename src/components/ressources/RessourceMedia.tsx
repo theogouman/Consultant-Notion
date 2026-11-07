@@ -2,13 +2,28 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { RessourceMedia as Media } from "@/content/ressources/types";
+import { animations } from "./animations";
 
 /**
- * Média du hero. Vidéo : `autoPlay muted loop playsInline`, avec un visuel de
+ * Média du hero. Animation codée : rendue telle quelle. Vidéo : `autoPlay muted loop playsInline`, avec un visuel de
  * repli aux couleurs de marque, visible tant que la vidéo n'a pas d'image
  * (chargement) ou si le fichier est absent / illisible.
  */
 export default function RessourceMedia({ media }: { media: Media }) {
+  // Animation codée : fond transparent, sans cadre, centrée (max ~560 px).
+  if (media.type === "animation") {
+    const Animation = animations[media.nom];
+    return (
+      <div className="mx-auto w-full max-w-[560px]">
+        <Animation label={media.alt} />
+      </div>
+    );
+  }
+  return <FramedMedia media={media} />;
+}
+
+/** Vidéo ou image dans une carte, avec visuel de repli. */
+function FramedMedia({ media }: { media: Exclude<Media, { type: "animation" }> }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [failed, setFailed] = useState(false);
 

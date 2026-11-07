@@ -1,4 +1,5 @@
-Déposer ici `animation.mp4` (vidéo du hero, lue en boucle sans son).
-Optionnel : `poster.jpg`, puis renseigner `media.poster` dans
-`src/content/ressources/memoire-ia-notion.ts`.
-Tant que la vidéo est absente, la page affiche un visuel de repli.
+Médias de la ressource `memoire-ia-notion`.
+
+- `logos/` : icônes d'app WebP (512×512, fond transparent, forme arrondie incluse)
+  utilisées par l'animation codée du hero
+  (`src/components/ressources/animations/MemoireIaAnimation.tsx`).

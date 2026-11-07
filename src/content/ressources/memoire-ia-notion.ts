@@ -19,9 +19,9 @@ export const memoireIaNotion: Ressource = {
   datePublication: "2026-11-07",
   tags: ["IA", "Notion", "Guide"],
   media: {
-    type: "video",
-    src: "/ressources/memoire-ia-notion/animation.mp4",
-    alt: "Animation : une IA enregistre son contexte dans Notion, puis une autre IA le relit.",
+    type: "animation",
+    nom: "memoire-ia",
+    alt: "Claude, Gemini et ChatGPT envoient leurs informations vers Notion, qui devient leur mémoire commune",
   },
   source: {
     label: "Guide officiel Notion « Set up Notion for your agent »",
