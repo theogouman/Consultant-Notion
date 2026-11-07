@@ -8,7 +8,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   CHANNEL_SEPARATOR,
+  EMPTY_ACQUISITION,
+  RESSOURCE_SOURCE,
+  captureRessourceAcquisition,
   formatAcquisitionChannel,
+  resolveDefaultAcquisition,
   sanitizeAcquisitionParam,
 } from "./acquisition";
 
@@ -42,4 +46,67 @@ test("format : un seul paramètre -> valeur seule, sans séparateur orphelin", (
 test("format : aucun paramètre -> chaîne vide (propriété CRM laissée vide)", () => {
   assert.equal(formatAcquisitionChannel({ source: null, post: null }), "");
   assert.equal(formatAcquisitionChannel({ source: "", post: "  " }), "");
+});
+
+/* -------------------------------------------------------------------------- */
+/* Attribution par défaut des pages ressources                                 */
+/* -------------------------------------------------------------------------- */
+
+test("défaut ressource : appliqué seulement sans attribution existante", () => {
+  const fallback = { source: RESSOURCE_SOURCE, post: "memoire-ia-notion" };
+  assert.deepEqual(resolveDefaultAcquisition(EMPTY_ACQUISITION, fallback), fallback);
+  // Une source déjà capturée (ex. ?source=linkedin) reste prioritaire.
+  const linkedin = { source: "linkedin", post: null };
+  assert.deepEqual(resolveDefaultAcquisition(linkedin, fallback), linkedin);
+  assert.equal(
+    formatAcquisitionChannel(resolveDefaultAcquisition(EMPTY_ACQUISITION, fallback)),
+    `ressource${CHANNEL_SEPARATOR}memoire-ia-notion`,
+  );
+});
+
+/** Faux navigateur minimal : URL + sessionStorage en mémoire. */
+function withFakeWindow(search: string, store: Map<string, string>, fn: () => void) {
+  const g = globalThis as unknown as { window?: unknown };
+  const previous = g.window;
+  g.window = {
+    location: { search },
+    sessionStorage: {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => void store.set(k, v),
+    },
+  };
+  try {
+    fn();
+  } finally {
+    g.window = previous;
+  }
+}
+
+// Ordre volontaire : le module garde un repli mémoire pour l'onglet, donc le
+// cas « onglet vierge » passe en premier.
+test("capture ressource : onglet vierge -> ressource⎜<slug> mémorisé", () => {
+  const store = new Map<string, string>();
+  withFakeWindow("", store, () => {
+    const acq = captureRessourceAcquisition("memoire-ia-notion");
+    assert.equal(formatAcquisitionChannel(acq), `ressource${CHANNEL_SEPARATOR}memoire-ia-notion`);
+  });
+  assert.deepEqual(JSON.parse(store.get("nc:acquisition") ?? "null"), {
+    source: "ressource",
+    post: "memoire-ia-notion",
+  });
+});
+
+test("capture ressource : une 2e ressource ne réécrit pas l'attribution", () => {
+  const store = new Map<string, string>();
+  withFakeWindow("", store, () => {
+    const acq = captureRessourceAcquisition("autre-ressource");
+    assert.equal(formatAcquisitionChannel(acq), `ressource${CHANNEL_SEPARATOR}memoire-ia-notion`);
+  });
+});
+
+test("capture ressource : ?source=linkedin dans l'URL reste prioritaire", () => {
+  withFakeWindow("?source=linkedin&post=carrousel", new Map(), () => {
+    const acq = captureRessourceAcquisition("memoire-ia-notion");
+    assert.equal(formatAcquisitionChannel(acq), `linkedin${CHANNEL_SEPARATOR}carrousel`);
+  });
 });
