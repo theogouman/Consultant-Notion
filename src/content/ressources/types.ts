@@ -68,8 +68,9 @@ export interface SectionEtapes {
 }
 
 /**
- * Encadré « À copier » : boutons « ouvrir dans une IA » (prompt pré-rempli +
- * copié), puis la valeur et son bouton Copier.
+ * Bloc d'installation : titre, boutons « ouvrir dans une IA » (prompt
+ * pré-rempli + copié), puis bouton Copier. La valeur n'est pas affichée :
+ * elle est portée par le bouton Copier.
  */
 export interface SectionCopie {
   type: "copie";
@@ -79,8 +80,8 @@ export interface SectionCopie {
   valeur: string;
   /** Libellé du bouton Copier (défaut : « Copier »). */
   boutonCopier?: string;
-  /** Consigne d'usage affichée sous la valeur. */
-  consigne: string;
+  /** Consigne d'usage affichée sous le bouton (optionnelle). */
+  consigne?: string;
   /** Liens qui ouvrent une IA avec `valeur` pré-remplie (affichés au-dessus). */
   ouvrirDans?: {
     label: string;

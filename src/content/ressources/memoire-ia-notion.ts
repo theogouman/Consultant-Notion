@@ -28,25 +28,18 @@ export const memoireIaNotion: Ressource = {
     nom: "memoire-ia",
     alt: "Claude, Gemini et ChatGPT envoient leurs informations vers Notion, qui devient leur mémoire commune",
   },
-  source: {
-    label: "Guide officiel Notion « Set up Notion for your agent »",
-    url: SETUP_URL,
-  },
   sections: [
     {
       type: "copie",
-      id: "lien",
-      titre: "À copier",
+      id: "installer",
+      titre: "Installe en 1-clic le système",
       valeur: PROMPT,
       boutonCopier: "Copier les instructions à donner à l'IA",
-      consigne:
-        "Colle ces instructions dans Claude ou ChatGPT : l'IA lance la configuration et te guide étape par étape.",
-      // `?q=` pré-remplit le message chez Claude et ChatGPT. Gemini n'a pas de
-      // paramètre officiel : le prompt est copié au clic, il suffit de coller.
+      // `?q=` pré-remplit le message chez Claude et ChatGPT ; le prompt est
+      // aussi copié au clic (repli si le pré-remplissage échoue).
       ouvrirDans: [
-        { label: "Installer sur Claude", url: `https://claude.ai/new?q=${Q}`, logo: `${LOGOS}/claude.webp` },
-        { label: "Installer sur ChatGPT", url: `https://chatgpt.com/?q=${Q}`, logo: `${LOGOS}/chatgpt.webp` },
-        { label: "Installer sur Gemini", url: "https://gemini.google.com/app", logo: `${LOGOS}/gemini.webp` },
+        { label: "Installer sur Claude", url: `https://claude.ai/new?q=${Q}`, logo: `${LOGOS}/anthropic.png` },
+        { label: "Installer sur ChatGPT", url: `https://chatgpt.com/?q=${Q}`, logo: `${LOGOS}/openai.svg` },
       ],
     },
     {

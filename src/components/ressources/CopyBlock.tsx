@@ -40,12 +40,12 @@ async function copyText(text: string) {
 }
 
 /**
- * Encadré « À copier » :
- *  1. boutons « Installer sur … » (3 colonnes) : ouvrent l'IA avec le prompt
- *     pré-rempli quand elle le permet, et copient le prompt au passage (repli
- *     si le pré-remplissage ne fonctionne pas) ;
- *  2. la valeur exacte + bouton Copier ;
- *  3. la consigne.
+ * Bloc d'installation (sans encadré) :
+ *  1. titre ;
+ *  2. boutons « Installer sur … » (une colonne par IA) : ouvrent l'IA avec le
+ *     prompt pré-rempli, et copient le prompt au passage (repli) ;
+ *  3. bouton « Copier » (action swap blur) : le prompt n'est pas affiché ;
+ *  4. consigne optionnelle.
  */
 export default function CopyBlock({ section }: { section: SectionCopie }) {
   const [copied, setCopied] = useState<"bouton" | "lien" | null>(null);
@@ -71,77 +71,54 @@ export default function CopyBlock({ section }: { section: SectionCopie }) {
   );
 
   return (
-    <div className="rounded-md border border-accent/30 bg-card p-5 nc-shadow-2 sm:p-7">
-      <p className="nc-eyebrow">{section.titre}</p>
+    <div>
+      <h2 className="nc-title nc-balance-wide text-center text-[1.75rem] sm:text-[2rem]">
+        {section.titre}
+      </h2>
 
       {section.ouvrirDans && section.ouvrirDans.length > 0 && (
-        <>
-          <ul className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
-            {section.ouvrirDans.map((lien) => (
-              <li key={lien.url}>
-                <a
-                  href={lien.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => void copy("lien")}
-                  className="flex h-full flex-col items-center justify-center gap-2 rounded-sm border border-line bg-card px-2 py-4 text-center transition-colors duration-[250ms] hover:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 sm:gap-3 sm:px-3 sm:py-5"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={lien.logo}
-                    alt=""
-                    width={48}
-                    height={48}
-                    className="h-10 w-10 sm:h-12 sm:w-12"
-                  />
-                  <span className="text-[0.8125rem] font-medium leading-snug text-ink sm:text-[0.9375rem]">
-                    {lien.label}
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-          {copied === "lien" && (
-            <p className="nc-tab-in mt-3 text-center text-sm text-muted">
-              Instructions copiées : colle-les si le message n&apos;est pas déjà rempli.
-            </p>
-          )}
-        </>
+        <ul
+          className="mt-6 grid gap-3"
+          style={{ gridTemplateColumns: `repeat(${section.ouvrirDans.length}, minmax(0, 1fr))` }}
+        >
+          {section.ouvrirDans.map((lien) => (
+            <li key={lien.url}>
+              <a
+                href={lien.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => void copy("lien")}
+                className="flex h-full items-center justify-center gap-2.5 rounded-xl border border-line bg-card px-3 py-3.5 nc-shadow-3 transition-[border-color,transform] duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-accent active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 sm:gap-3 sm:px-5"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={lien.logo} alt="" width={24} height={24} className="h-6 w-6 flex-none object-contain" />
+                <span className="text-[0.875rem] font-medium leading-snug text-ink sm:text-[0.9375rem]">
+                  {lien.label}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
       )}
 
-      <div className="mt-4">
-        <p className="rounded-xs bg-raised px-4 py-3 text-[0.9375rem] leading-relaxed text-ink [overflow-wrap:anywhere] select-all">
-          <BreakableUrls text={section.valeur} />
-        </p>
-        <button
-          type="button"
-          onClick={() => void copy("bouton")}
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl border border-line bg-card px-5 py-3 text-[0.9375rem] font-medium text-ink transition-[color,border-color,transform] duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-accent hover:text-accent active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-        >
-          <ActionSwap item={copied === "bouton" ? COPIED : idle} />
-        </button>
-      </div>
+      {/* Le texte copié n'est pas affiché : il est porté par le bouton. */}
+      <button
+        type="button"
+        onClick={() => void copy("bouton")}
+        aria-label={`${section.boutonCopier ?? "Copier"} : ${section.valeur}`}
+        className="mt-3 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl border border-line bg-card px-5 py-3.5 text-[0.9375rem] font-medium text-ink nc-shadow-3 transition-[color,border-color,transform] duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-accent hover:text-accent active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+      >
+        <ActionSwap item={copied === "bouton" ? COPIED : idle} />
+      </button>
 
-      <p className="mt-4 text-[1rem] leading-relaxed text-muted">
-        <RichText>{section.consigne}</RichText>
-      </p>
+      {section.consigne && (
+        <p className="mt-4 text-center text-[1rem] leading-relaxed text-muted">
+          <RichText>{section.consigne}</RichText>
+        </p>
+      )}
       <span className="sr-only" aria-live="polite">
         {copied ? "Instructions copiées dans le presse-papiers" : ""}
       </span>
     </div>
-  );
-}
-
-/** Points de coupure après les « / » des URL (évite « p/rompts » en mobile). */
-function BreakableUrls({ text }: { text: string }) {
-  return (
-    <>
-      {text.split(/(?<=\/)/).map((part, i) => (
-        <span key={i}>
-          {i > 0 && <wbr />}
-          {part}
-        </span>
-      ))}
-    </>
   );
 }
