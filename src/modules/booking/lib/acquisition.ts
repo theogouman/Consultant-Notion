@@ -122,3 +122,46 @@ export function getAcquisition(): Acquisition {
   if (stored && hasValue(stored)) memory = stored;
   return memory;
 }
+
+/**
+ * Attribution par défaut d'une page de contenu (ex. une ressource) :
+ * `source=ressource`, `post=<slug>` -> « ressource⎜<slug> » dans le CRM.
+ *
+ * Ne s'applique QUE si aucune attribution n'existe déjà pour l'onglet :
+ * un `?source=linkedin&post=…` présent dans l'URL, ou capturé plus tôt dans
+ * la visite, reste toujours prioritaire (premier contact gagnant).
+ */
+export function resolveDefaultAcquisition(
+  current: Acquisition,
+  fallback: Acquisition,
+): Acquisition {
+  if (hasValue(current)) return current;
+  const clean: Acquisition = {
+    source: sanitizeAcquisitionParam(fallback.source),
+    post: sanitizeAcquisitionParam(fallback.post),
+  };
+  return hasValue(clean) ? clean : EMPTY_ACQUISITION;
+}
+
+/** Valeurs de `source` posées automatiquement par les pages de contenu. */
+export const RESSOURCE_SOURCE = "ressource";
+
+/**
+ * Côté client : capture l'URL (prioritaire), puis, à défaut d'attribution,
+ * enregistre `source=ressource` + `post=<slug>` pour l'onglet.
+ */
+export function captureRessourceAcquisition(slug: string): Acquisition {
+  if (typeof window === "undefined") return EMPTY_ACQUISITION;
+  const current = captureAcquisitionFromUrl();
+  if (hasValue(current)) return current;
+
+  const next = resolveDefaultAcquisition(current, {
+    source: RESSOURCE_SOURCE,
+    post: slug,
+  });
+  if (hasValue(next)) {
+    memory = next;
+    writeStorage(next);
+  }
+  return next;
+}
