@@ -7,6 +7,8 @@ import { useEffect, useRef } from "react";
  * envoient des fichiers vers Notion, leur mémoire commune.
  *
  * - Repère SVG 800×800, fond transparent (le fond de la page apparaît).
+ *   Le viewBox est recadré sur la scène (tuiles + ombres) pour un rendu
+ *   compact, sans marge vide au-dessus et au-dessous.
  * - Une seule boucle requestAnimationFrame met à jour les attributs via des
  *   refs : aucun re-render React par frame.
  * - Pause hors écran (IntersectionObserver) et onglet caché.
@@ -245,7 +247,7 @@ export default function MemoireIaAnimation({ label }: { label: string }) {
   return (
     <svg
       ref={rootRef}
-      viewBox="0 0 800 800"
+      viewBox="50 158 700 600"
       role="img"
       aria-label={label}
       className="block h-auto w-full"

@@ -1786,3 +1786,56 @@ body {
     transform: none;
   }
 }
+
+/* --- Action swap « blur » (inspiré de beui.dev · action-swap) ------------
+   Échange d'état d'un bouton (ex. « Copier » → « Copié ») : l'ancienne
+   couche sort (160 ms, flou 2px + réduction), la nouvelle entre avec un
+   easing proche du ressort d'origine (stiffness 460, damping 30, mass 0.55 :
+   quasi critique, sans rebond). Couches empilées via grid (même cellule).   */
+.nc-swap-slot {
+  display: inline-grid;
+  justify-items: center;
+  align-items: center;
+}
+.nc-swap-slot > * {
+  grid-area: 1 / 1;
+  will-change: opacity, filter, transform;
+}
+.nc-swap-text-in {
+  animation: ncSwapTextIn 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.nc-swap-text-out {
+  animation: ncSwapTextOut 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.nc-swap-icon-in {
+  animation: ncSwapIconIn 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.nc-swap-icon-out {
+  animation: ncSwapIconOut 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes ncSwapTextIn {
+  from { opacity: 0; transform: scale(0.9); filter: blur(2px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+@keyframes ncSwapTextOut {
+  from { opacity: 1; transform: scale(1); filter: blur(0); }
+  to { opacity: 0; transform: scale(0.96); filter: blur(2px); }
+}
+@keyframes ncSwapIconIn {
+  from { opacity: 0; transform: scale(0.25); filter: blur(2px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+@keyframes ncSwapIconOut {
+  from { opacity: 1; transform: scale(1); filter: blur(0); }
+  to { opacity: 0; transform: scale(0.25); filter: blur(2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nc-swap-text-in,
+  .nc-swap-icon-in {
+    animation: none;
+  }
+  .nc-swap-text-out,
+  .nc-swap-icon-out {
+    display: none;
+  }
+}

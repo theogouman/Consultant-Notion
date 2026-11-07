@@ -10,11 +10,11 @@ import { animations } from "./animations";
  * (chargement) ou si le fichier est absent / illisible.
  */
 export default function RessourceMedia({ media }: { media: Media }) {
-  // Animation codée : fond transparent, sans cadre, centrée (max ~560 px).
+  // Animation codée : fond transparent, sans cadre, centrée et compacte.
   if (media.type === "animation") {
     const Animation = animations[media.nom];
     return (
-      <div className="mx-auto w-full max-w-[560px]">
+      <div className="mx-auto w-full max-w-[340px] sm:max-w-[420px]">
         <Animation label={media.alt} />
       </div>
     );
