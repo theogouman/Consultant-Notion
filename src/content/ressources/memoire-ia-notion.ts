@@ -9,6 +9,11 @@ import type { Ressource } from "./types";
  */
 const SETUP_URL = "https://developers.notion.com/prompts/setup";
 
+/** Prompt à donner à l'IA (formulation recommandée). */
+const PROMPT = `Help me set up Notion as my context system using this guide: ${SETUP_URL}`;
+const Q = encodeURIComponent(PROMPT);
+const LOGOS = "/ressources/memoire-ia-notion/logos";
+
 export const memoireIaNotion: Ressource = {
   slug: "memoire-ia-notion",
   titre: "Donne une mémoire à toutes tes IA, dans ton Notion",
@@ -32,9 +37,17 @@ export const memoireIaNotion: Ressource = {
       type: "copie",
       id: "lien",
       titre: "À copier",
-      valeur: SETUP_URL,
+      valeur: PROMPT,
+      boutonCopier: "Copier les instructions à donner à l'IA",
       consigne:
-        "Colle ce lien dans Claude ou ChatGPT et demande-lui de lancer la configuration.",
+        "Colle ces instructions dans Claude ou ChatGPT : l'IA lance la configuration et te guide étape par étape.",
+      // `?q=` pré-remplit le message chez Claude et ChatGPT. Gemini n'a pas de
+      // paramètre officiel : le prompt est copié au clic, il suffit de coller.
+      ouvrirDans: [
+        { label: "Installer sur Claude", url: `https://claude.ai/new?q=${Q}`, logo: `${LOGOS}/claude.webp` },
+        { label: "Installer sur ChatGPT", url: `https://chatgpt.com/?q=${Q}`, logo: `${LOGOS}/chatgpt.webp` },
+        { label: "Installer sur Gemini", url: "https://gemini.google.com/app", logo: `${LOGOS}/gemini.webp` },
+      ],
     },
     {
       type: "cta",

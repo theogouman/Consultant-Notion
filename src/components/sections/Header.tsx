@@ -21,7 +21,6 @@ export default function Header() {
   const isHome = pathname === "/";
   // Hors de la home, les ancres de la landing pointent vers `/#…`.
   const homeAnchor = (hash: string) => (isHome ? hash : `/${hash}`);
-  const onRessources = pathname?.startsWith("/ressources") ?? false;
 
   useEffect(() => {
     const target = document.getElementById("hero-cta");
@@ -52,19 +51,6 @@ export default function Header() {
             className="h-10 w-10 object-contain"
           />
           <span className="text-ink">{footer.name}</span>
-        </Link>
-
-        {/* Lien « Ressources » à côté du logo (le slot du CTA, à droite, reste
-            inchangé). Masqué sous 640px pour ne pas serrer le CTA : le pied de
-            page le propose aussi. */}
-        <Link
-          href="/ressources"
-          aria-current={onRessources ? "page" : undefined}
-          className={`ml-8 hidden text-[0.9375rem] transition-colors hover:text-accent sm:inline ${
-            onRessources ? "text-ink" : "text-muted"
-          }`}
-        >
-          Ressources
         </Link>
 
         <div

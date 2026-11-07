@@ -67,15 +67,28 @@ export interface SectionEtapes {
   etapes: { titre: string; texte: string; details?: string[] }[];
 }
 
-/** Encadré « À copier » avec bouton Copier. */
+/**
+ * Encadré « À copier » : boutons « ouvrir dans une IA » (prompt pré-rempli +
+ * copié), puis la valeur et son bouton Copier.
+ */
 export interface SectionCopie {
   type: "copie";
   id?: string;
   titre: string;
   /** Texte exact copié dans le presse-papiers. */
   valeur: string;
+  /** Libellé du bouton Copier (défaut : « Copier »). */
+  boutonCopier?: string;
   /** Consigne d'usage affichée sous la valeur. */
   consigne: string;
+  /** Liens qui ouvrent une IA avec `valeur` pré-remplie (affichés au-dessus). */
+  ouvrirDans?: {
+    label: string;
+    /** URL complète, prompt déjà encodé. */
+    url: string;
+    /** Icône (chemin public, carrée). */
+    logo: string;
+  }[];
 }
 
 /** Questions fréquentes (accordéons). */
