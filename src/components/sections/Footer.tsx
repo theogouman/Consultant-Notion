@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { footer } from "@/lib/content";
 
 /**
@@ -34,6 +35,12 @@ export default function Footer() {
                 </span>
               </span>{" "}
               🇫🇷
+            </p>
+
+            <p className="mt-3 text-sm">
+              <Link href="/ressources" className="text-muted transition-colors hover:text-accent">
+                Ressources
+              </Link>
             </p>
 
             <div className="mt-3 flex items-center gap-3">
