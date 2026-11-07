@@ -43,13 +43,16 @@ src/
 │   ├── globals.css        # Design system (tokens, fond de marque, animations)
 │   ├── layout.tsx         # Métadonnées FR, OpenGraph, lang="fr", fond de marque
 │   ├── page.tsx           # Assemble les 11 blocs (revalidate = 3600 → ISR)
+│   ├── ressources/        # Index + template unique [slug] + image OG (voir « Ressources »)
 │   ├── opengraph-image.tsx# Image de partage générée dynamiquement
 │   ├── icon.svg / robots / sitemap
 ├── components/
 │   ├── sections/          # Les 11 blocs de la landing + Header/Footer
 │   ├── ui/                # CtaButton (CTA unique → /rdv), Section, Reveal
 │   ├── case-studies/      # Grille + cartes (filtres par secteur)
+│   ├── ressources/        # Blocs de rendu des ressources (hero, étapes, à copier, FAQ, CTA…)
 │   └── notion/            # Moteur morph iOS + NotionRenderer
+├── content/ressources/    # Une ressource = un fichier .ts typé + registre index.ts
 ├── lib/
 │   ├── content.ts         # Tout le copy (zones [À AFFINER] regroupées)
 │   ├── spring.ts          # Physique du morph (constantes exactes)
@@ -57,6 +60,43 @@ src/
 ├── middleware.ts          # Protection /admin (cookie signé)
 └── modules/booking/       # Booker maison, isolé et réutilisable (voir plus bas)
 ```
+
+## Ressources (`/ressources`)
+
+Guides courts publiés sous `/ressources/<slug>`, chacun convertissant vers la
+prise de rendez-vous (même `BookingModalProvider` que la home, posé par
+`src/app/ressources/layout.tsx` : tout `CtaButton` ouvre le modal, `?l=1`
+l'ouvre à l'arrivée). Pages statiques (SSG), `dynamicParams = false` : un slug
+inconnu renvoie une 404.
+
+- **Contenu** : `src/content/ressources/<slug>.ts`, typé par `Ressource`
+  (`types.ts`) : titre, accroche, description SEO, dates, tags, média, et
+  sections typées (`intro`, `liste`, `etapes`, `copie`, `faq`, `cta`).
+- **Rendu** : `src/components/ressources/` (template unique, rien à coder).
+- **Généré automatiquement** à partir du registre : carte dans l'index,
+  page, métadonnées (canonical, OpenGraph article), image OG
+  (`[slug]/opengraph-image.tsx`), entrée du sitemap.
+- **Attribution** : sans `?source=` dans l'URL ni attribution déjà capturée
+  dans l'onglet, la page enregistre `source=ressource` + `post=<slug>` → le CRM
+  reçoit `ressource⎜<slug>`. Un lien `?source=linkedin&post=…` reste
+  prioritaire.
+- **Relecture** : tout fait non confirmé s'écrit `[À VÉRIFIER]` dans le
+  texte ; il est surligné à l'écran (et retiré des meta/OG). À supprimer avant
+  de partager la page.
+
+### Ajouter une ressource en 3 étapes
+
+1. **Écrire** `src/content/ressources/<slug>.ts` (copier
+   `memoire-ia-notion.ts` comme modèle). Le slug : minuscules, chiffres,
+   tirets.
+2. **Enregistrer** l'export dans le tableau `ALL` de
+   `src/content/ressources/index.ts` (une ligne d'import + une entrée).
+3. **Déposer les médias** dans `public/ressources/<slug>/` (vidéo en 16:9 de
+   préférence ; un visuel de repli s'affiche tant qu'elle est absente).
+
+Puis `npm test` (slugs uniques, dates ISO, présence d'un CTA…) et
+`npm run build`. Lien de campagne :
+`https://consultant-notion.fr/ressources/<slug>?source=linkedin&post=<post>`.
 
 ## Études de cas (Notion)
 
